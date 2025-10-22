@@ -359,6 +359,18 @@ require('lazy').setup {
                 { 'williamboman/mason.nvim',                  opts = {} },
                 { 'williamboman/mason-lspconfig.nvim' },
                 { 'WhoIsSethDaniel/mason-tool-installer.nvim' },
+                {
+                    'diogo464/kubernetes.nvim',
+                    opts = {
+                        -- this can help with autocomplete. it sets the `additionalProperties` field on type definitions to false if it is not already present.
+                        schema_strict = true,
+                        -- true:  generate the schema every time the plugin starts
+                        -- false: only generate the schema if the files don't already exists. run `:KubernetesGenerateSchema` manually to generate the schema if needed.
+                        schema_generate_always = true,
+                        -- Patch yaml-language-server's validation.js file.
+                        patch = true,
+                    }
+                },
             },
 
             config = function()
@@ -423,7 +435,30 @@ require('lazy').setup {
                     pyrefly = {},
                     ruff = {},
                     gopls = {},
-                    yamlls = {},
+                    yamlls = {
+                        settings = {
+                            yaml = {
+                                schemas = {
+                                    [require('kubernetes').yamlls_schema()] = "*.yaml",
+                                    ["http://json.schemastore.org/github-workflow"] = ".github/workflows/*",
+                                    ["http://json.schemastore.org/github-action"] = ".github/action.{yml,yaml}",
+                                    ["http://json.schemastore.org/ansible-stable-2.9"] = "roles/tasks/*.{yml,yaml}",
+                                    ["http://json.schemastore.org/prettierrc"] = ".prettierrc.{yml,yaml}",
+                                    ["http://json.schemastore.org/kustomization"] = "kustomization.{yml,yaml}",
+                                    ["http://json.schemastore.org/ansible-playbook"] = "*play*.{yml,yaml}",
+                                    ["http://json.schemastore.org/chart"] = "Chart.{yml,yaml}",
+                                    ["https://json.schemastore.org/dependabot-v2"] = ".github/dependabot.{yml,yaml}",
+                                    ["https://json.schemastore.org/gitlab-ci"] = "*gitlab-ci*.{yml,yaml}",
+                                    ["https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json"] =
+                                    "*api*.{yml,yaml}",
+                                    ["https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json"] =
+                                    "*docker-compose*.{yml,yaml}",
+                                    ["https://raw.githubusercontent.com/argoproj/argo-workflows/master/api/jsonschema/schema.json"] =
+                                    "*flow*.{yml,yaml}",
+                                },
+                            }
+                        }
+                    },
                     rust_analyzer = {},
                     dockerls = {},
                     jsonls = {},
@@ -437,31 +472,15 @@ require('lazy').setup {
                 require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
                 require('mason-lspconfig').setup {
-                    handlers = {
-                        function(server_name)
-                            local server = servers[server_name] or {}
-                            -- This handles overriding only values explicitly passed
-                            -- by the server configuration above. Useful when disabling
-                            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-                            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities,
-                                server.capabilities or {})
-                            require('lspconfig')[server_name].setup(server)
-                        end,
-                    },
+                    ensure_installed = ensure_installed
                 }
+
+                for name, server in pairs(servers) do
+                    server.capabilities = vim.tbl_deep_extend('force', {}, capabilities,
+                        server.capabilities or {})
+                    vim.lsp.config(name, server)
+                end
             end
-        },
-        {
-            'diogo464/kubernetes.nvim',
-            opts = {
-                -- this can help with autocomplete. it sets the `additionalProperties` field on type definitions to false if it is not already present.
-                schema_strict = true,
-                -- true:  generate the schema every time the plugin starts
-                -- false: only generate the schema if the files don't already exists. run `:KubernetesGenerateSchema` manually to generate the schema if needed.
-                schema_generate_always = true,
-                -- Patch yaml-language-server's validation.js file.
-                patch = true,
-            }
         },
         { -- Autoformat
             'stevearc/conform.nvim',
