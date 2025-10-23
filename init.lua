@@ -75,10 +75,10 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
+vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
+vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
+vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
+vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -431,7 +431,6 @@ require('lazy').setup {
 
                 local servers = {
                     clangd = {},
-                    pyright = {},
                     pyrefly = {},
                     ruff = {},
                     gopls = {},
@@ -687,6 +686,42 @@ require('lazy').setup {
                 },
             },
         },
+        { -- Precognition helps in learning vim motions
+            "tris203/precognition.nvim",
+            --event = "VeryLazy",
+            opts = {
+                -- startVisible = true,
+                -- showBlankVirtLine = true,
+                -- highlightColor = { link = "Comment" },
+                -- hints = {
+                --      Caret = { text = "^", prio = 2 },
+                --      Dollar = { text = "$", prio = 1 },
+                --      MatchingPair = { text = "%", prio = 5 },
+                --      Zero = { text = "0", prio = 1 },
+                --      w = { text = "w", prio = 10 },
+                --      b = { text = "b", prio = 9 },
+                --      e = { text = "e", prio = 8 },
+                --      W = { text = "W", prio = 7 },
+                --      B = { text = "B", prio = 6 },
+                --      E = { text = "E", prio = 5 },
+                -- },
+                -- gutterHints = {
+                --     G = { text = "G", prio = 10 },
+                --     gg = { text = "gg", prio = 9 },
+                --     PrevParagraph = { text = "{", prio = 8 },
+                --     NextParagraph = { text = "}", prio = 8 },
+                -- },
+                -- disabled_fts = {
+                --     "startify",
+                -- },
+            },
+        },
+        { -- Hardtime forces you to be efficient with keystrokes
+            "m4xshen/hardtime.nvim",
+            lazy = false,
+            dependencies = { "MunifTanjim/nui.nvim" },
+            opts = {},
+        }
     },
 
     checker = {
