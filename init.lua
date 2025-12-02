@@ -716,12 +716,84 @@ require('lazy').setup {
                 -- },
             },
         },
-        { -- Hardtime forces you to be efficient with keystrokes
-            "m4xshen/hardtime.nvim",
-            lazy = false,
-            dependencies = { "MunifTanjim/nui.nvim" },
-            opts = {},
-        }
+        -- { -- Hardtime forces you to be efficient with keystrokes
+        --     "m4xshen/hardtime.nvim",
+        --     lazy = false,
+        --     dependencies = { "MunifTanjim/nui.nvim" },
+        --     opts = {},
+        -- }
+        {
+          "olimorris/codecompanion.nvim",
+          opts = {},
+          dependencies = {
+            "nvim-lua/plenary.nvim",
+            "ravitemer/mcphub.nvim",
+            {
+              "OXY2DEV/markview.nvim",
+              lazy = false,
+              opts = {
+                preview = {
+                  filetypes = { "markdown", "codecompanion" },
+                  ignore_buftypes = {},
+                },
+              },
+            },
+            {
+              "echasnovski/mini.diff",
+              config = function()
+                local diff = require("mini.diff")
+                diff.setup({
+                  -- Disabled by default
+                  source = diff.gen_source.none(),
+                })
+              end,
+            },
+          },
+          config = function()
+            local cc = require("codecompanion")
+            cc.setup({
+                adapters = {
+                    http = {
+                      azure_openai = function()
+                        return require("codecompanion.adapters").extend("azure_openai", {
+                          env = {
+                            api_key = "cmd: gpg --batch --quiet --decrypt /home/alan/Documents/personal/security/AZURE_AI_API_TOKEN.gpg",
+                            endpoint = "cmd: gpg --batch --quiet --decrypt /home/alan/Documents/personal/security/AZURE_AI_API_ENDPOINT.gpg",
+                            api_version = "schema.api_version.default"
+                          },
+                          schema = {
+                            model = {
+                              default = "o4-mini",
+                            },
+                            api_version = {
+                              default = "2025-01-01-preview"
+                            },
+                          },
+                        })
+                      end,
+                    },
+                  },
+                strategies = {
+                    chat = {
+                      adapter = "azure_openai",
+                    },
+                    inline = {
+                      adapter = "azure_openai",
+                    },
+                  },
+                extensions = {
+                    mcphub = {
+                      callback = "mcphub.extensions.codecompanion",
+                      opts = {
+                        make_vars = true,
+                        make_slash_commands = true,
+                        show_result_in_chat = true
+                      }
+                    }
+                  }
+            })
+          end,
+        },
     },
 
     checker = {
