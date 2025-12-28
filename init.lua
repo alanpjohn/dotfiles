@@ -716,84 +716,57 @@ require('lazy').setup {
                 -- },
             },
         },
-        -- { -- Hardtime forces you to be efficient with keystrokes
-        --     "m4xshen/hardtime.nvim",
-        --     lazy = false,
-        --     dependencies = { "MunifTanjim/nui.nvim" },
-        --     opts = {},
-        -- }
         {
-          "olimorris/codecompanion.nvim",
-          opts = {},
-          dependencies = {
-            "nvim-lua/plenary.nvim",
-            "ravitemer/mcphub.nvim",
-            {
-              "OXY2DEV/markview.nvim",
-              lazy = false,
-              opts = {
-                preview = {
-                  filetypes = { "markdown", "codecompanion" },
-                  ignore_buftypes = {},
-                },
-              },
+            "NickvanDyke/opencode.nvim",
+            dependencies = {
+                -- Recommended for `ask()` and `select()`.
+                -- Required for `snacks` provider.
+                ---@module 'snacks' <- Loads `snacks.nvim` types for configuration intellisense.
+                {
+                    "folke/snacks.nvim",
+                    priority = 1000,
+                    lazy = false,
+                    opts = { input = {}, picker = {}, terminal = {} } },
             },
-            {
-              "echasnovski/mini.diff",
-              config = function()
-                local diff = require("mini.diff")
-                diff.setup({
-                  -- Disabled by default
-                  source = diff.gen_source.none(),
-                })
-              end,
-            },
-          },
-          config = function()
-            local cc = require("codecompanion")
-            cc.setup({
-                adapters = {
-                    http = {
-                      azure_openai = function()
-                        return require("codecompanion.adapters").extend("azure_openai", {
-                          env = {
-                            api_key = "cmd: gpg --batch --quiet --decrypt /home/alan/Documents/personal/security/AZURE_AI_API_TOKEN.gpg",
-                            endpoint = "cmd: gpg --batch --quiet --decrypt /home/alan/Documents/personal/security/AZURE_AI_API_ENDPOINT.gpg",
-                            api_version = "schema.api_version.default"
-                          },
-                          schema = {
-                            model = {
-                              default = "o4-mini",
-                            },
-                            api_version = {
-                              default = "2025-01-01-preview"
-                            },
-                          },
-                        })
-                      end,
-                    },
-                  },
-                strategies = {
-                    chat = {
-                      adapter = "azure_openai",
-                    },
-                    inline = {
-                      adapter = "azure_openai",
-                    },
-                  },
-                extensions = {
-                    mcphub = {
-                      callback = "mcphub.extensions.codecompanion",
-                      opts = {
-                        make_vars = true,
-                        make_slash_commands = true,
-                        show_result_in_chat = true
-                      }
+
+            config = function()
+                ---@type opencode.Opts
+                vim.g.opencode_opts = {
+                    -- Your configuration, if any — see `lua/opencode/config.lua`, or "goto definition".
+                    provider = {
+                        enabled = "tmux",
+                        tmux = {
+                            options = "-h",
+                        }
                     }
-                  }
-            })
-          end,
-        },
+                }
+
+                -- Required for `opts.events.reload`.
+                vim.o.autoread = true
+
+                -- Recommended/example keymaps.
+                vim.keymap.set({ "n", "x" }, "<C-a>",
+                    function() require("opencode").ask("@this: ", { submit = true }) end, { desc = "Ask opencode" })
+                vim.keymap.set({ "n", "x" }, "<C-x>", function() require("opencode").select() end,
+                    { desc = "Execute opencode action…" })
+                vim.keymap.set({ "n", "t" }, "<C-.>", function() require("opencode").toggle() end,
+                    { desc = "Toggle opencode" })
+
+                vim.keymap.set({ "n", "x" }, "go", function() return require("opencode").operator("@this ") end,
+                    { expr = true, desc = "Add range to opencode" })
+                vim.keymap.set("n", "goo", function() return require("opencode").operator("@this ") .. "_" end,
+                    { expr = true, desc = "Add line to opencode" })
+
+                vim.keymap.set("n", "<S-C-u>", function() require("opencode").command("session.half.page.up") end,
+                    { desc = "opencode half page up" })
+                vim.keymap.set("n", "<S-C-d>", function() require("opencode").command("session.half.page.down") end,
+                    { desc = "opencode half page down" })
+
+                -- You may want these if you stick with the opinionated "<C-a>" and "<C-x>" above — otherwise consider "<leader>o".
+                vim.keymap.set("n", "+", "<C-a>", { desc = "Increment", noremap = true })
+                vim.keymap.set("n", "-", "<C-x>", { desc = "Decrement", noremap = true })
+            end,
+        }
     },
 
     checker = {
