@@ -2,6 +2,12 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+-- set tab to 4
+vim.o.tabstop = 4
+vim.o.expandtab = true -- Pressing the TAB key will insert spaces instead of a TAB character
+vim.o.softtabstop = 4 -- Number of spaces inserted instead of a TAB character
+vim.o.shiftwidth = 4 -- Number of spaces inserted when indenting
+
 -- Enable line numbers
 vim.opt.number = true
 
@@ -68,13 +74,13 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 
 -- create tmux horizontal terminal
 vim.keymap.set("n", "<leader>eh", function()
-    local cwd = vim.fn.expand('%:p:h') -- Get current file's directory
+    local cwd = vim.fn.getcwd() -- Get current file's directory
     vim.fn.system(string.format('tmux split-window -h -c "%s"', cwd))
 end, { desc = 'Open tmux horizontal split in CWD' })
 
 -- create tmux horizontal terminal
 vim.keymap.set("n", "<leader>ev", function()
-    local cwd = vim.fn.expand('%:p:h') -- Get current file's directory
+    local cwd = vim.fn.getcwd() -- Get current file's directory
     vim.fn.system(string.format('tmux split-window -v -c "%s"', cwd))
 end, { desc = 'Open tmux vertical split in CWD' })
 
