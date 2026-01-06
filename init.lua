@@ -66,6 +66,20 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
+-- create tmux horizontal terminal
+vim.keymap.set("n", "<leader>eh", function()
+    local cwd = vim.fn.expand('%:p:h') -- Get current file's directory
+    vim.fn.system(string.format('tmux split-window -h -c "%s"', cwd))
+end, { desc = 'Open tmux horizontal split in CWD' })
+
+-- create tmux horizontal terminal
+vim.keymap.set("n", "<leader>ev", function()
+    local cwd = vim.fn.expand('%:p:h') -- Get current file's directory
+    vim.fn.system(string.format('tmux split-window -v -c "%s"', cwd))
+end, { desc = 'Open tmux vertical split in CWD' })
+
+
+
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
 -- is not what someone will guess without a bit more experience.
@@ -206,6 +220,7 @@ require('lazy').setup {
                     { '<leader>s', group = '[S]earch' },
                     { '<leader>w', group = '[W]orkspace' },
                     { '<leader>t', group = '[T]oggle' },
+                    { '<leader>e', group = 'T[E]rminal' },
                     { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
                 },
             },
@@ -435,6 +450,13 @@ require('lazy').setup {
                     ruff = {},
                     gopls = {},
                     yamlls = {
+                        cmd = {
+                            "bun",
+                            "run",
+                            "--bun",
+                            vim.fn.stdpath("data") .. "/mason/bin/yaml-language-server",
+                            "--stdio"
+                        },
                         settings = {
                             yaml = {
                                 schemas = {
@@ -459,9 +481,42 @@ require('lazy').setup {
                         }
                     },
                     rust_analyzer = {},
-                    dockerls = {},
-                    jsonls = {},
-                    bashls = {},
+                    dockerls = {
+                        cmd = {
+                            "bun",
+                            "run",
+                            "--bun",
+                            vim.fn.stdpath("data") .. "/mason/bin/docker-langserver",
+                            "--stdio"
+                        },
+                    },
+                    vtsls = {
+                        cmd = {
+                            "bun",
+                            "run",
+                            "--bun",
+                            vim.fn.stdpath("data") .. "/mason/bin/vtsls",
+                            "--stdio"
+                        },
+                    },
+                    jsonls = {
+                        cmd = {
+                            "bun",
+                            "run",
+                            "--bun",
+                            vim.fn.stdpath("data") .. "/mason/bin/vscode-json-language-server",
+                            "--stdio"
+                        },
+                    },
+                    bashls = {
+                        cmd = {
+                            "bun",
+                            "run",
+                            "--bun",
+                            vim.fn.stdpath("data") .. "/mason/bin/bash-language-server",
+                            "--stdio"
+                        },
+                    },
                 }
 
                 local ensure_installed = vim.tbl_keys(servers or {})
