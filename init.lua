@@ -794,12 +794,14 @@ require('lazy').setup {
                 ---@type opencode.Opts
                 vim.g.opencode_opts = {
                     -- Your configuration, if any — see `lua/opencode/config.lua`, or "goto definition".
-                    provider = {
-                        enabled = "tmux",
-                        tmux = {
-                            options = "-h",
-                        }
-                    }
+
+                    -- DEPRECATED
+                    -- provider = {
+                    --     enabled = "tmux",
+                    --     tmux = {
+                    --         options = "-h",
+                    --     }
+                    -- }
                 }
 
                 -- Required for `opts.events.reload`.
