@@ -449,6 +449,7 @@ require('lazy').setup {
                 local capabilities = vim.lsp.protocol.make_client_capabilities()
                 capabilities = vim.tbl_deep_extend('force', capabilities,
                     require('cmp_nvim_lsp').default_capabilities(capabilities))
+                capabilities.positionEncoding = "utf-16"
 
                 local function ensure_python_tools()
                     if vim.bo.filetype ~= 'python' then return end
@@ -467,8 +468,6 @@ require('lazy').setup {
 
                 local servers = {
                     clangd = {},
-                    pyrefly = {},
-                    ruff = {},
                     gopls = {},
                     efm = {
                         init_options = {
@@ -565,16 +564,16 @@ require('lazy').setup {
                 }
 
                 local ensure_installed = vim.tbl_keys(servers or {})
-                vim.list_extend(ensure_installed, {
-                    'stylua',        -- Used to format Lua code
-                    'golangci-lint', -- Linter aggregator
-                    'goimports',     -- Formatter with import organization
-                    'golines',       -- Line formatter
-                })
-                require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+                local tools = {
+                    'stylua',        -- Lua formatter
+                    'golangci-lint', -- Go linter aggregator
+                    'goimports',     -- Go formatter with import organization
+                    'golines',       -- Go line formatter
+                }
+                require('mason-tool-installer').setup { ensure_installed = tools }
 
                 require('mason-lspconfig').setup {
-                    ensure_installed = ensure_installed
+                    ensure_installed = ensure_installed,
                 }
 
                 for name, server in pairs(servers) do
