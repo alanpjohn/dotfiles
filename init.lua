@@ -5,8 +5,8 @@ vim.g.maplocalleader = ' '
 -- set tab to 4
 vim.o.tabstop = 4
 vim.o.expandtab = true -- Pressing the TAB key will insert spaces instead of a TAB character
-vim.o.softtabstop = 4 -- Number of spaces inserted instead of a TAB character
-vim.o.shiftwidth = 4 -- Number of spaces inserted when indenting
+vim.o.softtabstop = 4  -- Number of spaces inserted instead of a TAB character
+vim.o.shiftwidth = 4   -- Number of spaces inserted when indenting
 
 -- Enable line numbers
 vim.opt.number = true
@@ -387,7 +387,7 @@ require('lazy').setup {
                         schema_strict = true,
                         -- true:  generate the schema every time the plugin starts
                         -- false: only generate the schema if the files don't already exists. run `:KubernetesGenerateSchema` manually to generate the schema if needed.
-                        schema_generate_always = true,
+                        schema_generate_always = false,
                         -- Patch yaml-language-server's validation.js file.
                         patch = true,
                     }
@@ -486,7 +486,16 @@ require('lazy').setup {
                             }
                         }
                     },
-                    rust_analyzer = {},
+                    rust_analyzer = {
+                        procMacro = { enable = false },
+                        check = { workspace = false },
+                        cachePriming = { enable = false },
+                        numThreads = 2,
+                        cargo = {
+                            loadOutDirsFromCheck = false,
+                            allTargets = false,
+                        },
+                    },
                     dockerls = {
                         cmd = {
                             "bun",
@@ -540,6 +549,60 @@ require('lazy').setup {
                         server.capabilities or {})
                     vim.lsp.config(name, server)
                 end
+            end
+        },
+        {
+            'dmtrKovalenko/fff.nvim',
+            build = function()
+                -- this will download prebuild binary or try to use existing rustup toolchain to build from source
+                -- (if you are using lazy you can use gb for rebuilding a plugin if needed)
+                require("fff.download").download_or_build_binary()
+            end,
+            -- if you are using nixos
+            -- build = "nix run .#release",
+            opts = {                    -- (optional)
+                debug = {
+                    enabled = true,     -- we expect your collaboration at least during the beta
+                    show_scores = true, -- to help us optimize the scoring system, feel free to share your scores!
+                },
+            },
+            -- No need to lazy-load with lazy.nvim.
+            -- This plugin initializes itself lazily.
+            lazy = false,
+            keys = {
+                {
+                    "ff", -- try it if you didn't it is a banger keybinding for a picker
+                    function() require('fff').find_files() end,
+                    desc = 'FFFind files',
+                },
+                {
+                    "fg",
+                    function() require('fff').live_grep() end,
+                    desc = 'LiFFFe grep',
+                },
+                {
+                    "fz",
+                    function()
+                        require('fff').live_grep({
+                            grep = {
+                                modes = { 'fuzzy', 'plain' }
+                            }
+                        })
+                    end,
+                    desc = 'Live fffuzy grep',
+                },
+                {
+                    "fc",
+                    function() require('fff').live_grep({ query = vim.fn.expand("<cword>") }) end,
+                    desc = 'Search current word',
+                },
+            }
+        },
+        { -- Status Line
+            'nvim-lualine/lualine.nvim',
+            dependencies = { 'nvim-tree/nvim-web-devicons' },
+            config = function()
+                require('lualine').setup()
             end
         },
         { -- Autoformat
@@ -791,19 +854,6 @@ require('lazy').setup {
             },
 
             config = function()
-                ---@type opencode.Opts
-                vim.g.opencode_opts = {
-                    -- Your configuration, if any — see `lua/opencode/config.lua`, or "goto definition".
-
-                    -- DEPRECATED
-                    -- provider = {
-                    --     enabled = "tmux",
-                    --     tmux = {
-                    --         options = "-h",
-                    --     }
-                    -- }
-                }
-
                 -- Required for `opts.events.reload`.
                 vim.o.autoread = true
 
