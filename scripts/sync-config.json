@@ -1,0 +1,85 @@
+{
+    "global": {
+        "backup_directory": ".backups",
+        "backup_suffix": ".backup",
+        "default_validate_json": true,
+        "respect_gitignore": true
+    },
+    "applications": [
+        {
+            "name": "zed",
+            "type": "directory",
+            "repo_path": "zed",
+            "config_path": "zed",
+            "recursive": true,
+            "file_mappings": [
+                {
+                    "repo_name": "settings.jsonc",
+                    "config_name": "settings.json",
+                    "validate": false
+                },
+                {
+                    "repo_name": "tasks.jsonc",
+                    "config_name": "tasks.json",
+                    "validate": false
+                }
+            ],
+            "exclude": [
+                "*.backup",
+                "settings_backup.json",
+                "settings.json"
+            ],
+            "include": [
+                "*.jsonc",
+                "*.json",
+                "tasks.json",
+                "themes/"
+            ]
+        },
+        {
+            "name": "ghostty",
+            "type": "directory",
+            "repo_path": "ghostty",
+            "config_path": "ghostty",
+            "file_mappings": [
+                {
+                    "repo_name": "config",
+                    "config_name": "config"
+                }
+            ]
+        },
+        {
+            "name": "nvim",
+            "type": "directory",
+            "repo_path": "nvim",
+            "config_path": "nvim",
+            "recursive": true,
+            "exclude": [
+                "lazy-lock.json",
+                "tags",
+                ".luarc.json",
+                "spell/",
+                ".github/"
+            ]
+        },
+        {
+            "name": "starship",
+            "type": "file",
+            "repo_path": "starship/starship.toml",
+            "config_path": "starship.toml"
+        },
+        {
+            "name": "opencode",
+            "type": "directory",
+            "repo_path": "opencode",
+            "config_path": "opencode",
+            "recursive": true,
+            "exclude": [
+                "node_modules/",
+                "package.json",
+                "bun.lock",
+                ".gitignore"
+            ]
+        }
+    ]
+}
