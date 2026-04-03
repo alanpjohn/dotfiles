@@ -1,0 +1,265 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run the `zed: Open Default Settings` command
+// from the command palette
+{
+  "ssh_connections": [],
+  "agent_servers": {
+    "OpenCode": {
+      "type": "custom",
+      "command": "opencode",
+      "args": ["acp"],
+    },
+  },
+  "language_models": {
+    "openai_compatible": {
+      "Opencode Go": {
+        "api_url": "https://opencode.ai/zen/go/v1",
+        "available_models": [
+          {
+            "name": "kimi-k2.5",
+            "max_tokens": 200000,
+            "max_output_tokens": 32000,
+            "max_completion_tokens": 200000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": false,
+              "prompt_cache_key": false,
+              "chat_completions": true,
+            },
+          },
+          {
+            "name": "minimax-m2.5",
+            "max_tokens": 200000,
+            "max_output_tokens": 32000,
+            "max_completion_tokens": 200000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": false,
+              "prompt_cache_key": false,
+              "chat_completions": true,
+            },
+          },
+          {
+            "name": "minimax-m2.7",
+            "max_tokens": 200000,
+            "max_output_tokens": 32000,
+            "max_completion_tokens": 200000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": false,
+              "prompt_cache_key": false,
+              "chat_completions": true,
+            },
+          },
+          {
+            "name": "glm-5",
+            "max_tokens": 200000,
+            "max_output_tokens": 32000,
+            "max_completion_tokens": 200000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": false,
+              "prompt_cache_key": false,
+              "chat_completions": true,
+            },
+          },
+        ],
+      },
+    },
+  },
+  "disable_ai": false,
+  "context_servers": {},
+  "base_keymap": "VSCode",
+  "edit_predictions": {
+    "provider": "zed",
+    "mode": "subtle",
+    "copilot": {
+      "proxy": null,
+      "proxy_no_verify": null,
+    },
+    "enabled_in_text_threads": false,
+  },
+  "show_edit_predictions": false,
+  "icon_theme": "Catppuccin Frappé",
+  "agent": {
+    "tool_permissions": {
+      "default": "allow",
+    },
+    "default_profile": "write",
+    "inline_assistant_model": {
+      "provider": "Opencode Go",
+      "model": "kimi-k2.5",
+    },
+    "default_model": {
+      "provider": "Opencode Go",
+      "model": "minimax-m2.7",
+    },
+  },
+  "languages": {
+    "Rust": {
+      "show_edit_predictions": true,
+    },
+    "YAML": {
+      "show_edit_predictions": true,
+    },
+    "Python": {
+      "show_edit_predictions": true,
+      "language_servers": ["!pyright", "ty", "pyrefly", "ruff"],
+    },
+    "Go": {
+      "language_servers": ["gopls", "golangci-lint"],
+    },
+  },
+  "vim_mode": true,
+  "ui_font_size": 16,
+  "buffer_font_size": 14,
+  "buffer_font_family": "JetBrains Mono NL",
+  "terminal": {
+    "font_family": "JetBrains Mono NL",
+  },
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "Tokyo Night",
+  },
+  "file_types": {
+    "Helm": [
+      "**/templates/**/*.tpl",
+      "**/templates/**/*.yaml",
+      "**/templates/**/*.yml",
+      "**/helmfile.d/**/*.yaml",
+      "**/helmfile.d/**/*.yml",
+    ],
+  },
+  "lsp": {
+    "vtsls": {
+      "settings": {
+        "typescript": {
+          "updateImportsOnFileMove": {
+            "enabled": "always",
+          },
+        },
+        "javascript": {
+          "updateImportsOnFileMove": {
+            "enabled": "always",
+          },
+        },
+      },
+      "enable_lsp_tasks": true,
+    },
+    "helm_ls": {
+      "settings": {
+        "helm-ls": {
+          "logLevel": "info",
+          "yamlls": {
+            "enabled": true,
+          },
+        },
+      },
+    },
+    "gopls": {
+      "initialization_options": {
+        "hints": {
+          "assignVariableTypes": true,
+          "compositeLiteralFields": true,
+          "compositeLiteralTypes": true,
+          "constantValues": true,
+          "functionTypeParameters": true,
+          "parameterNames": true,
+          "rangeVariableTypes": true,
+        },
+      },
+    },
+    "golangci-lint": {},
+    "rust-analyzer": {
+      "initialization_options": {
+        "inlayHints": {
+          "maxLength": null,
+          "lifetimeElisionHints": {
+            "enable": "skip_trivial",
+            "useParameterNames": true,
+          },
+          "closureReturnTypeHints": {
+            "enable": "always",
+          },
+        },
+      },
+    },
+    "pyright": {
+      "settings": {
+        "python.analysis": {
+          "diagnosticMode": "openFilesOnly",
+          "typeCheckingMode": "basic",
+          "stubPath": ".venv/lib/python3.12/site-packages",
+          "extraPaths": ["./src"],
+        },
+        "python": {
+          "venvPath": ".venv",
+        },
+      },
+    },
+    "ty": {
+      "binary": {
+        "path": "/home/alan/.local/bin/uvx",
+        "arguments": ["ty", "server"],
+      },
+    },
+    "yaml-language-server": {
+      // "settings": {
+      //   "yaml": {
+      //     "keyOrdering": true,
+      //     "format": {
+      //       "singleQuote": true
+      //     },
+      //     "schemas": {
+      //       "file:///home/alan/.local/share/nvim/kubernetes.nvim/schema.json": "*.yaml"
+      //     }
+      //   }
+      // }
+    },
+    "lua-language-server": {
+      "settings": {
+        "Lua": {
+          "diagnostics": {
+            "globals": ["vim"],
+          },
+        },
+        "workspace": {
+          "library": ["$VIMRUNTIME/lua", "${3rd}/luv/library"],
+          "checkThirdParty": false,
+        },
+        "telemetry": {
+          "enable": false,
+        },
+      },
+    },
+    "pyrefly": {
+      "binary": {
+        "path": ".venv/bin/pyrefly",
+        "arguments": ["lsp"],
+      },
+      "settings": {
+        "python": {
+          "pythonPath": ".venv/bin/python",
+          "venvPath": ".venv",
+        },
+        "pyrefly": {
+          "project_includes": ["src/**/*.py", "tests/**/*.py"],
+          "project_excludes": ["**/.[!/.]*", "**/*venv/**"],
+          "site_package_path": [".venv/lib/python3.12/site_packages"],
+          "search_path": ["src"],
+          "ignore_errors_in_generated_code": true,
+        },
+      },
+    },
+  },
+}

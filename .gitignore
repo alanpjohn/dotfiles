@@ -1,3 +1,6 @@
-*
-!nvim
-!nvim/**
+# Backup
+.backups
+
+# Opencode configuration for the directory
+# Not to be confused with opencode global config
+.opencode
