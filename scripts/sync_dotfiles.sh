@@ -112,11 +112,11 @@ log_warning() {
 die() {
     local message="$1"
     local exit_code="${2:-${EXIT_ERROR}}"
-    
+
     if [[ -n "${message}" ]]; then
         log_error "${message}"
     fi
-    
+
     exit "${exit_code}"
 }
 
@@ -130,12 +130,12 @@ check_dependencies() {
     if ! command -v jq >/dev/null 2>&1; then
         die "jq is required but not installed" "${EXIT_ERROR}"
     fi
-    
+
     # Check for git (optional - warn if missing)
     if ! command -v git >/dev/null 2>&1; then
         log_warning "git not found, .gitignore support disabled"
     fi
-    
+
     return 0
 }
 
@@ -147,7 +147,7 @@ check_dependencies() {
 # Usage: set_dry_run "true" or set_dry_run "false"
 set_dry_run() {
     local value="$1"
-    
+
     if [[ "${value}" == "true" ]]; then
         DRY_RUN=true
     else
@@ -170,7 +170,7 @@ dry_run_log() {
     local action="$1"
     local source="$2"
     local destination="$3"
-    
+
     echo "[DRY-RUN] ${action}: ${source} → ${destination}"
 }
 
@@ -183,25 +183,25 @@ count_changes() {
     local count=0
     local source_files
     local mapping
-    
+
     # Get source files based on direction
     source_files=$(get_source_files "${app_name}" "${direction}")
-    
+
     if [[ -z "${source_files}" ]]; then
         echo 0
         return
     fi
-    
+
     # Count each file that would be synced
     while IFS= read -r file_path; do
         [[ -z "${file_path}" ]] && continue
-        
+
         # Check if file should be synced
         if should_sync_file "${app_name}" "${file_path}" "${direction}"; then
             ((count++))
         fi
     done <<< "${source_files}"
-    
+
     echo "${count}"
 }
 
@@ -216,45 +216,45 @@ preview_changes() {
     copy_count=0
     update_count=0
     backup_count=0
-    
+
     log_info "Previewing changes for '${app_name}' (${direction}):"
     echo ""
-    
+
     # Get source files based on direction
     source_files=$(get_source_files "${app_name}" "${direction}")
-    
+
     if [[ -z "${source_files}" ]]; then
         echo "  No files found for ${app_name}"
         echo ""
         return
     fi
-    
+
     # Get file mappings (may be empty for directory-type apps)
     local file_mappings
     file_mappings=$(get_app_file_mapping "${app_name}" "${direction}")
-    
+
     # Process each file
     while IFS= read -r file_path; do
         [[ -z "${file_path}" ]] && continue
-        
+
         # Check if file should be synced
         if ! should_sync_file "${app_name}" "${file_path}" "${direction}"; then
             continue
         fi
-        
+
         # Get the corresponding destination file
         local source_base dest_base repo_name config_name found_mapping
         source_base=$(basename "${file_path}")
         dest_base=""
         found_mapping=false
-        
+
         # Try to find mapping from file_mappings
         if [[ -n "${file_mappings}" ]]; then
             while IFS= read -r map_line; do
                 [[ -z "${map_line}" ]] && continue
                 repo_name=$(echo "${map_line}" | cut -d'|' -f1)
                 config_name=$(echo "${map_line}" | cut -d'|' -f2)
-                
+
                 if [[ "${direction}" == "push" ]]; then
                     if [[ "${source_base}" == "${repo_name}" ]]; then
                         dest_base="${config_name}"
@@ -270,12 +270,12 @@ preview_changes() {
                 fi
             done <<< "${file_mappings}"
         fi
-        
+
         # If no mapping found, use the same filename (for directory-type apps)
         if [[ -z "${dest_base}" ]]; then
             dest_base="${source_base}"
         fi
-        
+
         # Resolve full paths
         local source_full dest_full
         if [[ "${direction}" == "push" ]]; then
@@ -285,7 +285,7 @@ preview_changes() {
             source_full=$(resolve_config_path "${app_name}" "${source_base}")
             dest_full=$(resolve_repo_path "${app_name}" "${dest_base}")
         fi
-        
+
         # Check if destination exists
         if [[ -e "${dest_full}" ]]; then
             # File exists - check if it's different
@@ -294,7 +294,7 @@ preview_changes() {
                     # Files are different - would update
                     dry_run_log "Would update" "${source_full}" "${dest_full}"
                     update_count=$((update_count + 1))
-                    
+
                     # Would create backup for existing file
                     dry_run_log "Would create backup" "${dest_full}" "${dest_full}.backup"
                     backup_count=$((backup_count + 1))
@@ -303,7 +303,7 @@ preview_changes() {
                 # Directories are different - would update
                 dry_run_log "Would update" "${source_full}" "${dest_full}"
                 update_count=$((update_count + 1))
-                
+
                 # Would create backup for existing directory
                 dry_run_log "Would create backup" "${dest_full}" "${dest_full}.backup"
                 backup_count=$((backup_count + 1))
@@ -312,7 +312,7 @@ preview_changes() {
             # File doesn't exist - would copy
             dry_run_log "Would copy" "${source_full}" "${dest_full}"
             copy_count=$((copy_count + 1))
-            
+
             # Check if parent directory exists
             local parent_dir
             parent_dir=$(dirname "${dest_full}")
@@ -321,7 +321,7 @@ preview_changes() {
             fi
         fi
     done <<< "${source_files}"
-    
+
     echo ""
     echo "Summary:"
     echo "  Would copy: ${copy_count} new file(s)"
@@ -343,14 +343,6 @@ Commands:
   list          List all configured applications
   validate      Validate all configurations without syncing
 
-Applications:
-  zed           Zed editor configuration
-  ghostty       Ghostty terminal configuration
-  nvim          Neovim configuration
-  starship      Starship prompt configuration
-  opencode      Opencode configuration
-  --all         All applications (default if no app specified)
-
 Options:
   --dry-run     Show what would be synced without making changes
   --force       Overwrite even if destination is newer (skip conflict check)
@@ -361,7 +353,7 @@ Options:
 Examples:
   ./sync.sh push zed              # Push zed config to ~/.config
   ./sync.sh pull nvim             # Pull nvim config from ~/.config
-  ./sync.sh push --all            # Push all configs
+  ./sync.sh push                  # Push all configs
   ./sync.sh push --dry-run        # Preview push changes
   ./sync.sh list                  # Show configured apps
   ./sync.sh validate              # Validate all configs
@@ -378,7 +370,7 @@ EOF
 # Returns 0 if valid, 1 otherwise
 validate_command() {
     local cmd="$1"
-    
+
     case "${cmd}" in
         push|pull|list|validate|help)
             return 0
@@ -400,7 +392,7 @@ parse_args() {
     DRY_RUN=false
     FORCE=false
     VERBOSE=true
-    
+
     # Check for --help first (can appear anywhere)
     for arg in "$@"; do
         if [[ "${arg}" == "--help" ]]; then
@@ -408,17 +400,17 @@ parse_args() {
             exit "${EXIT_SUCCESS}"
         fi
     done
-    
+
     # If no arguments, show help and exit
     if [[ $# -eq 0 ]]; then
         show_help
         exit "${EXIT_INVALID_ARGS}"
     fi
-    
+
     # Parse arguments
     local args=("$@")
     local positional_args=()
-    
+
     for arg in "${args[@]}"; do
         case "${arg}" in
             --dry-run)
@@ -447,23 +439,23 @@ parse_args() {
                 ;;
         esac
     done
-    
+
     # Validate positional arguments
     if [[ ${#positional_args[@]} -lt 1 ]]; then
         log_error "Missing command"
         show_help
         exit "${EXIT_INVALID_ARGS}"
     fi
-    
+
     if [[ ${#positional_args[@]} -gt 2 ]]; then
         log_error "Too many arguments"
         show_help
         exit "${EXIT_INVALID_ARGS}"
     fi
-    
+
     # First positional arg is COMMAND
     COMMAND="${positional_args[0]}"
-    
+
     # Validate command
     if ! validate_command "${COMMAND}"; then
         log_error "Invalid command: ${COMMAND}"
@@ -471,14 +463,14 @@ parse_args() {
         show_help
         exit "${EXIT_INVALID_ARGS}"
     fi
-    
+
     # Second positional arg is APP (optional)
     if [[ ${#positional_args[@]} -ge 2 ]]; then
         APP="${positional_args[1]}"
     else
         APP="--all"
     fi
-    
+
     # Validate APP if not --all
     if [[ "${APP}" != "--all" ]]; then
         if ! app_exists "${APP}"; then
@@ -488,7 +480,7 @@ parse_args() {
             exit "${EXIT_INVALID_ARGS}"
         fi
     fi
-    
+
     return 0
 }
 
@@ -501,10 +493,10 @@ parse_args() {
 # Returns 0 if exists, 1 otherwise
 check_file_exists() {
     local file_path="$1"
-    
+
     [[ -z "${file_path}" ]] && return 1
     [[ -f "${file_path}" ]] && return 0
-    
+
     return 1
 }
 
@@ -513,13 +505,13 @@ check_file_exists() {
 # Returns 0 if valid, 1 if invalid or file doesn't exist
 validate_json() {
     local file_path="$1"
-    
+
     # Check if file exists
     if [[ ! -f "${file_path}" ]]; then
         echo "Error: File not found: ${file_path}" >&2
         return 1
     fi
-    
+
     # Validate JSON using jq
     if jq empty "${file_path}" 2>/dev/null; then
         return 0
@@ -536,17 +528,17 @@ validate_jsonc() {
     local file_path="$1"
     local temp_file
     local cleaned_content
-    
+
     # Check if file exists
     if [[ ! -f "${file_path}" ]]; then
         echo "Error: File not found: ${file_path}" >&2
         return 1
     fi
-    
+
     # Create temp file for cleaned content
     temp_file=$(mktemp)
     trap "rm -f '${temp_file}'" RETURN
-    
+
     # Strip comments and validate
     # Remove single-line comments (// ...)
     # Remove multi-line comments (/* ... */)
@@ -554,12 +546,12 @@ validate_jsonc() {
     sed -e 's/\/\/.*$//' \
         -e 's/\/\*.*\*\///g' \
         "${file_path}" > "${temp_file}"
-    
+
     # Try to validate the cleaned content
     if jq empty "${temp_file}" 2>/dev/null; then
         return 0
     fi
-    
+
     # Lenient approach: if we can't parse it, assume it's valid JSONC
     # since comments are expected in these files
     return 0
@@ -572,14 +564,14 @@ get_file_validate_setting() {
     local app_name="$1"
     local file_name="$2"
     local value
-    
+
     value=$(jq -r ".applications[] | select(.name == \"${app_name}\") | .file_mappings[] | select(.repo_name == \"${file_name}\" or .config_name == \"${file_name}\") | .validate // empty" "${CONFIG_FILE}" 2>/dev/null)
-    
+
     if [[ -z "${value}" || "${value}" == "null" ]]; then
         echo ""
         return
     fi
-    
+
     echo "${value}"
 }
 
@@ -593,45 +585,45 @@ should_validate() {
     local file_name
     local global_validate
     local file_validate_setting
-    
+
     # Get filename from path
     file_name=$(basename "${file_path}")
-    
+
     # Get global default_validate_json setting
     global_validate=$(get_global_setting "default_validate_json")
-    
+
     # If global setting is not true, skip validation
     if [[ "${global_validate}" != "true" ]]; then
         return 1
     fi
-    
+
     # Check file extension - .jsonc files are handled specially
     if [[ "${file_name}" == *.jsonc ]]; then
         # Check if there's a per-file setting for this file
         file_validate_setting=$(get_file_validate_setting "${app_name}" "${file_name}")
-        
+
         # If file has explicit validate: false, skip
         if [[ "${file_validate_setting}" == "false" ]]; then
             return 1
         fi
-        
+
         # Otherwise, we'll validate as JSONC (lenient)
         return 0
     fi
-    
+
     # For .json files, check per-file setting
     if [[ "${file_name}" == *.json ]]; then
         file_validate_setting=$(get_file_validate_setting "${app_name}" "${file_name}")
-        
+
         # If file has explicit validate: false, skip
         if [[ "${file_validate_setting}" == "false" ]]; then
             return 1
         fi
-        
+
         # Otherwise, validate as JSON
         return 0
     fi
-    
+
     # Non-JSON files - skip validation
     return 1
 }
@@ -644,15 +636,15 @@ validate_file() {
     local file_path="$2"
     local direction="$3"
     local file_name
-    
+
     # Check if file should be validated
     if ! should_validate "${app_name}" "${file_path}" "${direction}"; then
         return 0
     fi
-    
+
     # Get filename
     file_name=$(basename "${file_path}")
-    
+
     # Validate based on file extension
     if [[ "${file_name}" == *.jsonc ]]; then
         # Validate as JSONC
@@ -685,7 +677,7 @@ validate_file() {
 get_backup_config() {
     local config_type="$1"
     local value
-    
+
     if [[ "${config_type}" == "directory" ]]; then
         value=$(get_global_setting "backup_directory")
         # Return default if not set
@@ -701,7 +693,7 @@ get_backup_config() {
             return
         fi
     fi
-    
+
     echo "${value}"
 }
 
@@ -724,11 +716,11 @@ get_backup_path() {
     local backup_suffix
     local relative_path
     local backup_path
-    
+
     # Get backup configuration
     backup_dir=$(get_backup_dir)
     backup_suffix=$(get_backup_config "suffix")
-    
+
     # Compute relative path from source
     # For push: file is in ~/.config, we need path relative to app config dir
     # For pull: file is in repo, we need path relative to app repo dir
@@ -742,7 +734,7 @@ get_backup_path() {
             # File is in repo
             source_base=$(resolve_repo_path "${app_name}" "")
         fi
-        
+
         # Get relative path
         if [[ -n "${source_base}" && "${file_path}" == "${source_base}"* ]]; then
             relative_path="${file_path#${source_base}/}"
@@ -755,7 +747,7 @@ get_backup_path() {
         relative_path=$(basename "${file_path}")
         app_name="misc"
     fi
-    
+
     # Build backup path: backup_dir/app_name/relative_path.backup
     backup_path="${backup_dir}/${app_name}/${relative_path}${backup_suffix}"
     echo "${backup_path}"
@@ -769,25 +761,25 @@ create_backup() {
     local app_name="$2"
     local backup_path
     local backup_dir
-    
+
     # Validate input
     [[ -z "${file_path}" ]] && return 1
-    
+
     # Get backup path
     backup_path=$(get_backup_path "${file_path}" "${app_name}")
     backup_dir=$(dirname "${backup_path}")
-    
+
     # Check if source exists
     if [[ ! -e "${file_path}" ]]; then
         return 1
     fi
-    
+
     # Handle dry run mode
     if is_dry_run; then
         dry_run_log "Would create backup" "${file_path}" "${backup_path}"
         return 0
     fi
-    
+
     # Create backup directory if it doesn't exist
     if [[ ! -d "${backup_dir}" ]]; then
         if ! mkdir -p "${backup_dir}"; then
@@ -795,14 +787,14 @@ create_backup() {
             return 1
         fi
     fi
-    
+
     # Remove existing backup if present
     if [[ -e "${backup_path}" ]]; then
         if ! rm -rf "${backup_path}"; then
             return 1
         fi
     fi
-    
+
     # Create backup based on type (file or directory)
     if [[ -d "${file_path}" ]]; then
         # Directory: use cp -rp (recursive, preserve permissions)
@@ -815,7 +807,7 @@ create_backup() {
             return 1
         fi
     fi
-    
+
     log_verbose "Creating backup: ${file_path} → ${backup_path}"
     return 0
 }
@@ -827,29 +819,29 @@ remove_backup() {
     local file_path="$1"
     local app_name="$2"
     local backup_path
-    
+
     # Validate input
     [[ -z "${file_path}" ]] && return 1
-    
+
     # Get backup path
     backup_path=$(get_backup_path "${file_path}" "${app_name}")
-    
+
     # Check if backup exists
     if [[ ! -e "${backup_path}" ]]; then
         return 0
     fi
-    
+
     # Handle dry run mode
     if is_dry_run; then
         dry_run_log "Would remove backup" "${backup_path}" ""
         return 0
     fi
-    
+
     # Remove backup
     if ! rm -rf "${backup_path}"; then
         return 1
     fi
-    
+
     return 0
 }
 
@@ -860,36 +852,36 @@ restore_backup() {
     local file_path="$1"
     local app_name="$2"
     local backup_path
-    
+
     # Validate input
     [[ -z "${file_path}" ]] && return 1
-    
+
     # Get backup path
     backup_path=$(get_backup_path "${file_path}" "${app_name}")
-    
+
     # Check if backup exists
     if [[ ! -e "${backup_path}" ]]; then
         return 1
     fi
-    
+
     # Handle dry run mode
     if is_dry_run; then
         dry_run_log "Would restore backup" "${backup_path}" "${file_path}"
         return 0
     fi
-    
+
     # Remove original file/directory if it exists
     if [[ -e "${file_path}" ]]; then
         if ! rm -rf "${file_path}"; then
             return 1
         fi
     fi
-    
+
     # Move backup back to original location
     if ! mv "${backup_path}" "${file_path}"; then
         return 1
     fi
-    
+
     return 0
 }
 
@@ -904,12 +896,12 @@ load_config() {
         echo "Error: Config file not found: ${CONFIG_FILE}" >&2
         return 1
     fi
-    
+
     if ! jq empty "${CONFIG_FILE}" 2>/dev/null; then
         echo "Error: Invalid JSON in config file: ${CONFIG_FILE}" >&2
         return 1
     fi
-    
+
     return 0
 }
 
@@ -919,14 +911,14 @@ load_config() {
 get_global_setting() {
     local key="$1"
     local value
-    
+
     value=$(jq -r ".global[\"${key}\"] // empty" "${CONFIG_FILE}" 2>/dev/null)
-    
+
     if [[ -z "${value}" || "${value}" == "null" ]]; then
         echo ""
         return
     fi
-    
+
     echo "${value}"
 }
 
@@ -943,14 +935,14 @@ get_app_config() {
     local app_name="$1"
     local key="$2"
     local value
-    
+
     value=$(jq -r ".applications[] | select(.name == \"${app_name}\")[\"${key}\"] // empty" "${CONFIG_FILE}" 2>/dev/null)
-    
+
     if [[ -z "${value}" || "${value}" == "null" ]]; then
         echo ""
         return
     fi
-    
+
     echo "${value}"
 }
 
@@ -959,13 +951,13 @@ get_app_config() {
 app_exists() {
     local app_name="$1"
     local count
-    
+
     count=$(jq -r ".applications[] | select(.name == \"${app_name}\") | length" "${CONFIG_FILE}" 2>/dev/null)
-    
+
     if [[ -n "${count}" && "${count}" != "null" ]]; then
         return 0
     fi
-    
+
     return 1
 }
 
@@ -977,35 +969,35 @@ get_app_file_mapping() {
     local app_name="$1"
     local direction="$2"
     local mappings
-    
+
     # Check if app exists
     if ! app_exists "${app_name}"; then
         echo ""
         return
     fi
-    
+
     # Get file mappings for the app
     mappings=$(jq -r ".applications[] | select(.name == \"${app_name}\") | .file_mappings[]" "${CONFIG_FILE}" 2>/dev/null)
-    
+
     # If no mappings exist, return empty
     if [[ -z "${mappings}" || "${mappings}" == "null" ]]; then
         echo ""
         return
     fi
-    
+
     # Process each mapping
     local result=""
     while IFS= read -r line; do
         [[ -z "${line}" ]] && continue
-        
+
         local repo_name config_name
         repo_name=$(echo "${line}" | jq -r '.repo_name')
         config_name=$(echo "${line}" | jq -r '.config_name')
-        
+
         # Skip if either is null/empty
         [[ "${repo_name}" == "null" || -z "${repo_name}" ]] && continue
         [[ "${config_name}" == "null" || -z "${config_name}" ]] && continue
-        
+
         if [[ "${direction}" == "push" ]]; then
             # Push: repo_file|config_file
             echo "${repo_name}|${config_name}"
@@ -1033,12 +1025,12 @@ git_available() {
 # Handles case where git is not available (returns 1, not ignored)
 is_gitignored() {
     local file_path="$1"
-    
+
     # Check if git is available
     if ! git_available; then
         return 1
     fi
-    
+
     # Use git check-ignore to test if file is ignored
     # -q suppresses output, only returns exit code
     # Must run from repo root
@@ -1056,7 +1048,7 @@ is_gitignored() {
 matches_pattern() {
     local file_path="$1"
     local pattern="$2"
-    
+
     # Handle directory patterns (ending with /)
     if [[ "${pattern}" == */ ]]; then
         # Remove trailing slash for matching
@@ -1067,7 +1059,7 @@ matches_pattern() {
         fi
         return 1
     fi
-    
+
     # Use bash pattern matching for file patterns
     case "${file_path}" in
         ${pattern})
@@ -1088,22 +1080,22 @@ matches_pattern() {
 # Returns empty if no include patterns or app not found
 get_include_patterns() {
     local app_name="$1"
-    
+
     # Check if app exists
     if ! app_exists "${app_name}"; then
         echo ""
         return
     fi
-    
+
     # Get include patterns
     local patterns
     patterns=$(jq -r ".applications[] | select(.name == \"${app_name}\") | .include[]" "${CONFIG_FILE}" 2>/dev/null)
-    
+
     if [[ -z "${patterns}" || "${patterns}" == "null" ]]; then
         echo ""
         return
     fi
-    
+
     echo "${patterns}"
 }
 
@@ -1113,22 +1105,22 @@ get_include_patterns() {
 # Returns empty if no exclude patterns or app not found
 get_exclude_patterns() {
     local app_name="$1"
-    
+
     # Check if app exists
     if ! app_exists "${app_name}"; then
         echo ""
         return
     fi
-    
+
     # Get exclude patterns
     local patterns
     patterns=$(jq -r ".applications[] | select(.name == \"${app_name}\") | .exclude[]" "${CONFIG_FILE}" 2>/dev/null)
-    
+
     if [[ -z "${patterns}" || "${patterns}" == "null" ]]; then
         echo ""
         return
     fi
-    
+
     echo "${patterns}"
 }
 
@@ -1138,21 +1130,21 @@ get_exclude_patterns() {
 matches_any_pattern() {
     local file_path="$1"
     local patterns="$2"
-    
+
     # If no patterns, return 1 (no match)
     if [[ -z "${patterns}" ]]; then
         return 1
     fi
-    
+
     # Check against each pattern
     while IFS= read -r pattern; do
         [[ -z "${pattern}" ]] && continue
-        
+
         if matches_pattern "${file_path}" "${pattern}"; then
             return 0
         fi
     done <<< "${patterns}"
-    
+
     return 1
 }
 
@@ -1168,18 +1160,18 @@ should_sync_file() {
     local app_name="$1"
     local file_path="$2"
     local direction="$3"
-    
+
     # Get respect_gitignore setting
     local respect_gitignore
     respect_gitignore=$(get_global_setting "respect_gitignore")
-    
+
     # 1. Check if file is gitignored (if respect_gitignore is true)
     if [[ "${respect_gitignore}" == "true" ]]; then
         if is_gitignored "${file_path}"; then
             return 1
         fi
     fi
-    
+
     # 2. Check include patterns (if any exist)
     local include_patterns
     include_patterns=$(get_include_patterns "${app_name}")
@@ -1188,7 +1180,7 @@ should_sync_file() {
             return 1
         fi
     fi
-    
+
     # 3. Check exclude patterns
     local exclude_patterns
     exclude_patterns=$(get_exclude_patterns "${app_name}")
@@ -1197,7 +1189,7 @@ should_sync_file() {
             return 1
         fi
     fi
-    
+
     # 4. Otherwise → sync
     return 0
 }
@@ -1210,27 +1202,27 @@ filter_files() {
     local app_name="$1"
     local file_list="$2"
     local direction="$3"
-    
+
     local filtered_list=""
-    
+
     # If file_list is empty or looks like a direction (from pipe usage), read from stdin
     # This handles: printf "file1\nfile2" | filter_files "app" "push"
     # In this case $2="push" but we want stdin for file_list
     if [[ -z "${file_list}" || "${file_list}" == "push" || "${file_list}" == "pull" ]]; then
         file_list=$(cat)
     fi
-    
+
     # If no files, return empty
     if [[ -z "${file_list}" ]]; then
         echo ""
         return
     fi
-    
+
     # Process each file - use for loop to avoid stdin conflicts when piped
     {
         for file_path in ${file_list}; do
             [[ -z "${file_path}" ]] && continue
-            
+
             if should_sync_file "${app_name}" "${file_path}" "${direction}"; then
                 if [[ -z "${filtered_list}" ]]; then
                     filtered_list="${file_path}"
@@ -1240,7 +1232,7 @@ filter_files() {
             fi
         done
     } 3< /dev/null
-    
+
     echo "${filtered_list}"
 }
 
@@ -1254,18 +1246,18 @@ filter_files() {
 normalize_path() {
     local path="$1"
     local normalized
-    
+
     # Handle empty input
     [[ -z "${path}" ]] && return
-    
+
     # Remove trailing slashes
     normalized="${path%/}"
-    
+
     # Expand ~ to $HOME
     if [[ "${normalized}" == "~"* ]]; then
         normalized="${HOME}${normalized#*~}"
     fi
-    
+
     # Use realpath if available and path exists, otherwise just return cleaned path
     if command -v realpath >/dev/null 2>&1 && [[ -e "${normalized}" ]]; then
         realpath "${normalized}"
@@ -1282,24 +1274,24 @@ resolve_repo_path() {
     local relative_path="$2"
     local app_repo_path
     local result
-    
+
     # Get app's repo_path from config
     app_repo_path=$(get_app_config "${app_name}" "repo_path")
-    
+
     # Return empty if app not found or no repo_path
     if [[ -z "${app_repo_path}" || "${app_repo_path}" == "null" ]]; then
         echo ""
         return
     fi
-    
+
     # Build the path: REPO_ROOT + app_repo_path + relative_path
     result="${REPO_ROOT}/${app_repo_path}"
-    
+
     # Add relative_path if provided and not empty
     if [[ -n "${relative_path}" ]]; then
         result="${result}/${relative_path}"
     fi
-    
+
     # Normalize and return the path
     normalize_path "${result}"
 }
@@ -1312,24 +1304,24 @@ resolve_config_path() {
     local relative_path="$2"
     local app_config_path
     local result
-    
+
     # Get app's config_path from config
     app_config_path=$(get_app_config "${app_name}" "config_path")
-    
+
     # Return empty if app not found or no config_path
     if [[ -z "${app_config_path}" || "${app_config_path}" == "null" ]]; then
         echo ""
         return
     fi
-    
+
     # Build the path: CONFIG_DIR + app_config_path + relative_path
     result="${CONFIG_DIR}/${app_config_path}"
-    
+
     # Add relative_path if provided and not empty
     if [[ -n "${relative_path}" ]]; then
         result="${result}/${relative_path}"
     fi
-    
+
     # Normalize and return the path
     normalize_path "${result}"
 }
@@ -1347,11 +1339,11 @@ get_source_files() {
     local source_path
     local exclude_patterns
     local include_patterns
-    
+
     # Get app type and recursive setting
     app_type=$(get_app_config "${app_name}" "type")
     recursive=$(get_app_config "${app_name}" "recursive")
-    
+
     # Determine source path based on direction
     if [[ "${direction}" == "push" ]]; then
         # Push: source is repo
@@ -1360,26 +1352,26 @@ get_source_files() {
         # Pull: source is config
         source_path=$(resolve_config_path "${app_name}" "")
     fi
-    
+
     # Return empty if source path is empty or doesn't exist
     if [[ -z "${source_path}" || ! -e "${source_path}" ]]; then
         echo ""
         return
     fi
-    
+
     # Handle based on type
     if [[ "${app_type}" == "directory" ]]; then
         # Directory type: use find to list files
         # Separate directory patterns (ending with /) from file patterns
         local dir_prune_args=()
         local file_exclude_args=()
-        
+
         # Add exclude patterns if any
         exclude_patterns=$(jq -r ".applications[] | select(.name == \"${app_name}\") | .exclude[]?" "${CONFIG_FILE}" 2>/dev/null)
         if [[ -n "${exclude_patterns}" ]]; then
             while IFS= read -r pattern; do
                 [[ -z "${pattern}" ]] && continue
-                
+
                 # Check if it's a directory pattern (ends with /)
                 if [[ "${pattern}" == */ ]]; then
                     # Remove trailing slash and use -prune to skip entire directory
@@ -1391,7 +1383,7 @@ get_source_files() {
                 fi
             done < <(echo "${exclude_patterns}")
         fi
-        
+
         # Handle recursive setting
         if [[ "${recursive}" == "true" ]]; then
             # Recursive: find all files in subdirectories
@@ -1427,30 +1419,30 @@ get_mapped_filename() {
     local file_name="$2"
     local direction="$3"
     local mappings
-    
+
     # Get mappings for the app
     mappings=$(get_app_file_mapping "${app_name}" "${direction}")
-    
+
     if [[ -z "${mappings}" ]]; then
         # No mappings, return original filename
         echo "${file_name}"
         return
     fi
-    
+
     # Look for the file in mappings
     while IFS= read -r mapping; do
         [[ -z "${mapping}" ]] && continue
-        
+
         local source_name target_name
         source_name=$(echo "${mapping}" | cut -d'|' -f1)
         target_name=$(echo "${mapping}" | cut -d'|' -f2)
-        
+
         if [[ "${file_name}" == "${source_name}" ]]; then
             echo "${target_name}"
             return
         fi
     done <<< "${mappings}"
-    
+
     # No mapping found, return original filename
     echo "${file_name}"
 }
@@ -1464,27 +1456,27 @@ sync_file() {
     local dest_file="$3"
     local direction="$4"
     local source_type
-    
+
     # Validate inputs
     [[ -z "${app_name}" || -z "${source_file}" || -z "${dest_file}" || -z "${direction}" ]] && return 1
-    
+
     # Check if source exists
     if [[ ! -e "${source_file}" ]]; then
         log_error "Source file does not exist: ${source_file}"
         return 1
     fi
-    
+
     # Determine source type (file or directory)
     if [[ -d "${source_file}" ]]; then
         source_type="directory"
     else
         source_type="file"
     fi
-    
+
     # Get the destination directory
     local dest_dir
     dest_dir=$(dirname "${dest_file}")
-    
+
     # Create destination directory if needed
     if [[ ! -d "${dest_dir}" ]]; then
         if is_dry_run; then
@@ -1497,20 +1489,20 @@ sync_file() {
             log_verbose "Created directory: ${dest_dir}"
         fi
     fi
-    
+
     # If destination exists and FORCE is false, check if dest is newer
     if [[ -e "${dest_file}" && "${FORCE}" != "true" ]]; then
         # Get modification times
         local source_mtime dest_mtime
         source_mtime=$(stat -c %Y "${source_file}" 2>/dev/null)
         dest_mtime=$(stat -c %Y "${dest_file}" 2>/dev/null)
-        
+
         # If destination is newer, warn and skip
         if [[ "${dest_mtime}" -gt "${source_mtime}" ]]; then
             log_verbose "Destination is newer, skipping: ${dest_file}"
             return 0
         fi
-        
+
         # Destination is older or same, create backup before overwrite
         if ! create_backup "${dest_file}" "${app_name}"; then
             log_error "Failed to create backup for: ${dest_file}"
@@ -1525,22 +1517,22 @@ sync_file() {
             return 1
         fi
     fi
-    
+
     # Validate source file
     if ! validate_file "${app_name}" "${source_file}" "${direction}"; then
         log_error "Validation failed for source: ${source_file}"
         return 1
     fi
-    
+
     # Handle dry run mode
     if is_dry_run; then
         dry_run_log "Would copy" "${source_file}" "${dest_file}"
         return 0
     fi
-    
+
     # Log the sync operation
     log_verbose "Syncing: ${source_file} → ${dest_file}"
-    
+
     # Copy based on type
     if [[ "${source_type}" == "directory" ]]; then
         # Directory: use cp -rp (recursive, preserve permissions)
@@ -1555,7 +1547,7 @@ sync_file() {
             return 1
         fi
     fi
-    
+
     return 0
 }
 
@@ -1567,10 +1559,10 @@ sync_app_push() {
     local source_files
     local synced_count=0
     local failed=0
-    
+
     # Validate input
     [[ -z "${app_name}" ]] && return 1
-    
+
     log_verbose "Starting push sync for app: ${app_name}"
 
     # Get list of files from repo
@@ -1584,7 +1576,7 @@ sync_app_push() {
     # Filter files using should_sync_file
     local filtered_files
     filtered_files=$(echo "${source_files}" | filter_files "${app_name}" "push")
-    
+
     if [[ -z "${filtered_files}" ]]; then
         log_verbose "No files to sync after filtering for app: ${app_name}"
         echo "Synced 0 files for ${app_name}"
@@ -1633,14 +1625,14 @@ sync_app_push() {
             repo_path=$(resolve_repo_path "${app_name}" "${relative_path}")
             config_path=$(resolve_config_path "${app_name}" "${dest_relative}")
         fi
-        
+
         # Skip if paths couldn't be resolved
         if [[ -z "${repo_path}" || -z "${config_path}" ]]; then
             log_error "Failed to resolve paths for: ${file_path}"
             ((failed++))
             continue
         fi
-        
+
         # Sync the file
         if sync_file "${app_name}" "${repo_path}" "${config_path}" "push"; then
             ((synced_count++))
@@ -1649,15 +1641,15 @@ sync_app_push() {
             ((failed++))
         fi
     done <<< "${filtered_files}"
-    
+
     # Log summary
     log_verbose "Synced ${synced_count} files for ${app_name}"
     echo "Synced ${synced_count} files for ${app_name}"
-    
+
     if [[ ${failed} -gt 0 ]]; then
         return 1
     fi
-    
+
     return 0
 }
 
@@ -1669,10 +1661,10 @@ sync_app_pull() {
     local source_files
     local synced_count=0
     local failed=0
-    
+
     # Validate input
     [[ -z "${app_name}" ]] && return 1
-    
+
     log_verbose "Starting pull sync for app: ${app_name}"
 
     # Get list of files from config
@@ -1686,13 +1678,13 @@ sync_app_pull() {
     # Filter files using should_sync_file
     local filtered_files
     filtered_files=$(echo "${source_files}" | filter_files "${app_name}" "pull")
-    
+
     if [[ -z "${filtered_files}" ]]; then
         log_verbose "No files to sync after filtering for app: ${app_name}"
         echo "Synced 0 files for ${app_name}"
         return 0
     fi
-    
+
     # Get app type for special handling
     local app_type
     app_type=$(get_app_config "${app_name}" "type")
@@ -1735,14 +1727,14 @@ sync_app_pull() {
             config_path=$(resolve_config_path "${app_name}" "${relative_path}")
             repo_path=$(resolve_repo_path "${app_name}" "${repo_relative}")
         fi
-        
+
         # Skip if paths couldn't be resolved
         if [[ -z "${config_path}" || -z "${repo_path}" ]]; then
             log_error "Failed to resolve paths for: ${file_path}"
             ((failed++))
             continue
         fi
-        
+
         # Sync the file
         if sync_file "${app_name}" "${config_path}" "${repo_path}" "pull"; then
             ((synced_count++))
@@ -1751,15 +1743,15 @@ sync_app_pull() {
             ((failed++))
         fi
     done <<< "${filtered_files}"
-    
+
     # Log summary
     log_verbose "Synced ${synced_count} files for ${app_name}"
     echo "Synced ${synced_count} files for ${app_name}"
-    
+
     if [[ ${failed} -gt 0 ]]; then
         return 1
     fi
-    
+
     return 0
 }
 
@@ -1770,25 +1762,25 @@ sync_all() {
     local direction="$1"
     local total_synced=0
     local total_failed=0
-    
+
     # Validate direction
     [[ -z "${direction}" || (("${direction}" != "push" && "${direction}" != "pull")) ]] && return 1
-    
+
     log_verbose "Starting sync all in ${direction} mode"
-    
+
     # Get list of all applications
     local apps
     apps=$(list_applications)
-    
+
     if [[ -z "${apps}" ]]; then
         log_error "No applications found in config"
         return 1
     fi
-    
+
     # Sync each app
     while IFS= read -r app_name; do
         [[ -z "${app_name}" ]] && continue
-        
+
         local result
         if [[ "${direction}" == "push" ]]; then
             sync_app_push "${app_name}"
@@ -1797,20 +1789,20 @@ sync_all() {
             sync_app_pull "${app_name}"
             result=$?
         fi
-        
+
         if [[ ${result} -ne 0 ]]; then
             ((total_failed++))
         fi
     done <<< "${apps}"
-    
+
     # Log summary of total files synced
     log_verbose "Completed sync all in ${direction} mode"
     echo "Total apps with failures: ${total_failed}"
-    
+
     if [[ ${total_failed} -gt 0 ]]; then
         return 1
     fi
-    
+
     return 0
 }
 
@@ -1826,49 +1818,49 @@ validate_all_configs() {
     local total_apps=0
     local total_files=0
     local failed_apps=0
-    
+
     # Get list of all applications
     apps=$(list_applications)
-    
+
     if [[ -z "${apps}" ]]; then
         log_error "No applications found in config"
         return 1
     fi
-    
+
     log_info "Validating all application configurations..."
-    
+
     # Validate each app
     while IFS= read -r app_name; do
         [[ -z "${app_name}" ]] && continue
-        
+
         ((total_apps++))
-        
+
         local source_files
         local app_valid=true
-        
+
         # Get source files for this app (push direction for validation)
         source_files=$(get_source_files "${app_name}" "push")
-        
+
         if [[ -z "${source_files}" ]]; then
             log_verbose "No files to validate for app: ${app_name}"
             continue
         fi
-        
+
         # Filter files
         local filtered_files
         filtered_files=$(echo "${source_files}" | filter_files "${app_name}" "push")
-        
+
         if [[ -z "${filtered_files}" ]]; then
             log_verbose "No files to validate after filtering for app: ${app_name}"
             continue
         fi
-        
+
         # Validate each file
         while IFS= read -r file_path; do
             [[ -z "${file_path}" ]] && continue
-            
+
             ((total_files++))
-            
+
             # Check if file should be validated
             if should_validate "${app_name}" "${file_path}" "push"; then
                 if ! validate_file "${app_name}" "${file_path}" "push"; then
@@ -1877,20 +1869,20 @@ validate_all_configs() {
                 fi
             fi
         done <<< "${filtered_files}"
-        
+
         if [[ "${app_valid}" == "false" ]]; then
             ((failed_apps++))
         fi
     done <<< "${apps}"
-    
+
     # Log summary
     log_info "Validated ${total_apps} apps, ${total_files} files"
-    
+
     if [[ ${failed_apps} -gt 0 ]]; then
         log_error "${failed_apps} app(s) failed validation"
         return 1
     fi
-    
+
     return 0
 }
 
@@ -1903,17 +1895,17 @@ main() {
     if ! check_dependencies; then
         die "Dependency check failed" "${EXIT_ERROR}"
     fi
-    
+
     # Load configuration
     if ! load_config; then
         die "Failed to load configuration" "${EXIT_CONFIG_ERROR}"
     fi
-    
+
     # Parse command-line arguments
     if ! parse_args "$@"; then
         die "Failed to parse arguments" "${EXIT_INVALID_ARGS}"
     fi
-    
+
     # Execute command
     case "${COMMAND}" in
         list)
