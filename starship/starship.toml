@@ -1,14 +1,10 @@
-"$schema" = 'https://starship.rs/config-schema.json'
-
 format = """
-[░▒▓](#728f71)\
-[  ](bg:#728f71 fg:#090c0c)\
-[](bg:#5e735e fg:#728f71)\
+[░▒▓](color7)\
+[ 󰣇 ](bg:color7 fg:color1)\
+[](bg:color4 fg:color7)\
 $directory\
-[](fg:#5e735e bg:#4c5e4c)\
 $git_branch\
 $git_status\
-[](fg:#4c5e4c bg:#354c35)\
 $rust\
 $golang\
 $python\
@@ -16,16 +12,32 @@ $bun\
 $kubernetes\
 $aws\
 $azure\
-[](fg:#354c35 bg:#1f2d1f)\
 $time\
-[ ](fg:#1f2d1f)\
+[ ](fg:color6)\
 \n$character"""
 
+palette = 'colors'
+
+[palettes.colors]
+mustard = '#af8700'
+color1 = '#d0bcff'
+color2 = '#381e72'
+color3 = '#cac4cf'
+color4 = '#211f24'
+color5 = '#381e72'
+color6 = '#141218'
+color7 = '#141218'
+color8 = '#d0bcff'
+color9 = '#ccc2dc'
+
+[character]
+success_symbol = "[❯](color9 bold)"
+error_symbol = "[❯](red bold)"
+vicmd_symbol = "[❮](color9)"
+
 [directory]
-style = "fg:#e3e5e5 bg:#5e735e"
-format = "[ $path ]($style)"
+format = "[](fg:color1 bg:color4)[󰉋](bg:color1 fg:color2)[](fg:color1 bg:color4)[ $path ](fg:color3 bg:color4)[](fg:color4 bg:color6)"
 truncation_length = 3
-truncation_symbol = "…/"
 
 [directory.substitutions]
 "Documents" = "󰈙 "
@@ -39,52 +51,42 @@ truncation_symbol = "…/"
 
 [git_branch]
 symbol = ""
-style = "bg:#4c5e4c"
-format = '[[ $symbol $branch ](fg:#9acb9a bg:#4c5e4c)]($style)'
+format = "[](fg:color8 bg:color6)[${symbol}](bg:color8 fg:color5)[](fg:color8 bg:color6)[ $branch](fg:color3 bg:color6)[](fg:color6 bg:color6)"
 
 [git_status]
-style = "bg:#4c5e4c"
-format = '[[($all_status$ahead_behind )](fg:#9acb9a bg:#4c5e4c)]($style)'
+format = "[([${all_status}${ahead_behind}](fg:color3 bg:color6))](bg:color6)[](fg:color6 bg:color6)"
 
 [rust]
 symbol = ""
-style = "bg:#354c35"
-format = '[[ $symbol ($version) ](fg:#9acb9a bg:#354c35)]($style)'
+format = "[](fg:#b7310e bg:color6)[${symbol}${version}](bg:#b7310e fg:#ffffff)[](fg:#b7310e bg:color6)[](fg:color6 bg:color6)"
 
 [golang]
 symbol = ""
-style = "bg:#354c35"
-format = '[[ $symbol ($version) ](fg:#9acb9a bg:#354c35)]($style)'
+format = "[](fg:#0a678c bg:color6)[${symbol}${version}](bg:#0a678c fg:#ffffff)[](fg:#0a678c bg:color6)[](fg:color6 bg:color6)"
 
 [bun]
 symbol = ""
-style = "bg:#354c35"
-format = '[[$symbol $version](fg:#9acb9a bg:#354c35)]($style)'
+format = "[](fg:color8 bg:color6)[${symbol}${version}](bg:color8 fg:color5)[](fg:color8 bg:color6)[](fg:color6 bg:color6)"
 
 [python]
 symbol = ""
-style = "bg:#354c35"
-format = '[[ $symbol ($version) ](fg:#9acb9a bg:#354c35)]($style)'
+format = "[](fg:color8 bg:color6)[${symbol}${version}](bg:color8 fg:color5)[](fg:color8 bg:color6)([ ${virtualenv}](fg:color3 bg:color6))[](fg:color6 bg:color6)"
 
 [kubernetes]
-symbol = ""
-style = "bg:#354c35"
-format = '[ [$symbol $context \($namespace\)](fg:#9acb9a bg:#354c35) ]($style)'
+symbol = "󱃾"
+format = "[](fg:color8 bg:color6)[${symbol}](bg:color8 fg:color5)[](fg:color8 bg:color6)[ $context ($namespace)](fg:color3 bg:color6)[](fg:color6 bg:color6)"
 disabled = false
 
 [aws]
 symbol = ""
-style = "bg:#354c35"
-format = '[ [$symbol $region](fg:#9acb9a bg:#354c35) ]($style)'
+format = "[](fg:color8 bg:color6)[${symbol}](bg:color8 fg:color5)[](fg:color8 bg:color6)[ $region](fg:color3 bg:color6)[](fg:color6 bg:color6)"
 
 [azure]
 symbol = ""
-style = "bg:#354c35"
-format = '[ [$symbol $username](fg:#9acb9a bg:#354c35) ]($style)'
+format = "[](fg:color8 bg:color6)[${symbol}](bg:color8 fg:color5)[](fg:color8 bg:color6)[ $username](fg:color3 bg:color6)[](fg:color6 bg:color6)"
 disabled = false
 
 [time]
 disabled = false
 time_format = "%R"
-style = "bg:#1f2d1f"
-format = '[[  $time ](fg:#9acb9a bg:#1f2d1f)]($style)'
+format = "[](fg:color8 bg:color6)[](bg:color8 fg:color5)[](fg:color8 bg:color6)[ $time](fg:color3 bg:color6)[](fg:color6)"
