@@ -4,7 +4,7 @@
 #
 # This script manages bidirectional synchronization of dotfiles between
 # the repository and the user's home directory. It reads configuration from
-# sync-config.json and handles file linking, copying, and validation.
+# sync-config.json and handles file linking and copying.
 #
 
 set -e
@@ -15,7 +15,6 @@ readonly EXIT_ERROR=1
 readonly EXIT_INVALID_ARGS=2
 readonly EXIT_CONFIG_ERROR=3
 readonly EXIT_SYNC_FAILED=4
-readonly EXIT_VALIDATION_FAILED=5
 
 # Global variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -137,6 +136,18 @@ check_dependencies() {
     fi
 
     return 0
+}
+
+# Check if a file exists
+# Usage: check_file_exists "/path/to/file"
+# Returns 0 if exists, 1 otherwise
+check_file_exists() {
+    local file_path="$1"
+
+    [[ -z "${file_path}" ]] && return 1
+    [[ -f "${file_path}" ]] && return 0
+
+    return 1
 }
 
 # ============================================================================
@@ -341,7 +352,6 @@ Commands:
   push          Sync from repo to ~/.config (repo is source of truth)
   pull          Sync from ~/.config to repo (~/.config is source of truth)
   list          List all configured applications
-  validate      Validate all configurations without syncing
 
 Options:
   --dry-run     Show what would be synced without making changes
@@ -356,7 +366,6 @@ Examples:
   ./sync.sh push                  # Push all configs
   ./sync.sh push --dry-run        # Preview push changes
   ./sync.sh list                  # Show configured apps
-  ./sync.sh validate              # Validate all configs
 
 Configuration:
   Edit sync-config.json to customize file mappings and exclusions.
@@ -372,7 +381,7 @@ validate_command() {
     local cmd="$1"
 
     case "${cmd}" in
-        push|pull|list|validate|help)
+        push|pull|list|help)
             return 0
             ;;
         *)
@@ -459,7 +468,7 @@ parse_args() {
     # Validate command
     if ! validate_command "${COMMAND}"; then
         log_error "Invalid command: ${COMMAND}"
-        log_error "Valid commands: push, pull, list, validate"
+        log_error "Valid commands: push, pull, list"
         show_help
         exit "${EXIT_INVALID_ARGS}"
     fi
@@ -482,190 +491,6 @@ parse_args() {
     fi
 
     return 0
-}
-
-# ============================================================================
-# Validation Functions
-# ============================================================================
-
-# Check if a file exists
-# Usage: check_file_exists "/path/to/file"
-# Returns 0 if exists, 1 otherwise
-check_file_exists() {
-    local file_path="$1"
-
-    [[ -z "${file_path}" ]] && return 1
-    [[ -f "${file_path}" ]] && return 0
-
-    return 1
-}
-
-# Validate JSON file syntax
-# Usage: validate_json "/path/to/file.json"
-# Returns 0 if valid, 1 if invalid or file doesn't exist
-validate_json() {
-    local file_path="$1"
-
-    # Check if file exists
-    if [[ ! -f "${file_path}" ]]; then
-        echo "Error: File not found: ${file_path}" >&2
-        return 1
-    fi
-
-    # Validate JSON using jq
-    if jq empty "${file_path}" 2>/dev/null; then
-        return 0
-    else
-        echo "Error: Invalid JSON in file: ${file_path}" >&2
-        return 1
-    fi
-}
-
-# Validate JSONC file (JSON with Comments)
-# Usage: validate_jsonc "/path/to/file.jsonc"
-# Returns 0 if valid after stripping comments, 1 otherwise
-validate_jsonc() {
-    local file_path="$1"
-    local temp_file
-    local cleaned_content
-
-    # Check if file exists
-    if [[ ! -f "${file_path}" ]]; then
-        echo "Error: File not found: ${file_path}" >&2
-        return 1
-    fi
-
-    # Create temp file for cleaned content
-    temp_file=$(mktemp)
-    trap "rm -f '${temp_file}'" RETURN
-
-    # Strip comments and validate
-    # Remove single-line comments (// ...)
-    # Remove multi-line comments (/* ... */)
-    # This is a simple approach - handles most common cases
-    sed -e 's/\/\/.*$//' \
-        -e 's/\/\*.*\*\///g' \
-        "${file_path}" > "${temp_file}"
-
-    # Try to validate the cleaned content
-    if jq empty "${temp_file}" 2>/dev/null; then
-        return 0
-    fi
-
-    # Lenient approach: if we can't parse it, assume it's valid JSONC
-    # since comments are expected in these files
-    return 0
-}
-
-# Get per-file validate setting from file_mappings
-# Usage: validate_setting=$(get_file_validate_setting "zed" "settings.jsonc")
-# Returns "true", "false", or empty if not found
-get_file_validate_setting() {
-    local app_name="$1"
-    local file_name="$2"
-    local value
-
-    value=$(jq -r ".applications[] | select(.name == \"${app_name}\") | .file_mappings[] | select(.repo_name == \"${file_name}\" or .config_name == \"${file_name}\") | .validate // empty" "${CONFIG_FILE}" 2>/dev/null)
-
-    if [[ -z "${value}" || "${value}" == "null" ]]; then
-        echo ""
-        return
-    fi
-
-    echo "${value}"
-}
-
-# Determine if a file should be validated
-# Usage: should_validate "zed" "settings.jsonc" "push"
-# Returns 0 if should validate, 1 to skip
-should_validate() {
-    local app_name="$1"
-    local file_path="$2"
-    local direction="$3"
-    local file_name
-    local global_validate
-    local file_validate_setting
-
-    # Get filename from path
-    file_name=$(basename "${file_path}")
-
-    # Get global default_validate_json setting
-    global_validate=$(get_global_setting "default_validate_json")
-
-    # If global setting is not true, skip validation
-    if [[ "${global_validate}" != "true" ]]; then
-        return 1
-    fi
-
-    # Check file extension - .jsonc files are handled specially
-    if [[ "${file_name}" == *.jsonc ]]; then
-        # Check if there's a per-file setting for this file
-        file_validate_setting=$(get_file_validate_setting "${app_name}" "${file_name}")
-
-        # If file has explicit validate: false, skip
-        if [[ "${file_validate_setting}" == "false" ]]; then
-            return 1
-        fi
-
-        # Otherwise, we'll validate as JSONC (lenient)
-        return 0
-    fi
-
-    # For .json files, check per-file setting
-    if [[ "${file_name}" == *.json ]]; then
-        file_validate_setting=$(get_file_validate_setting "${app_name}" "${file_name}")
-
-        # If file has explicit validate: false, skip
-        if [[ "${file_validate_setting}" == "false" ]]; then
-            return 1
-        fi
-
-        # Otherwise, validate as JSON
-        return 0
-    fi
-
-    # Non-JSON files - skip validation
-    return 1
-}
-
-# Validate a file based on its type
-# Usage: validate_file "zed" "/path/to/settings.jsonc" "push"
-# Returns 0 on success, 1 on validation failure
-validate_file() {
-    local app_name="$1"
-    local file_path="$2"
-    local direction="$3"
-    local file_name
-
-    # Check if file should be validated
-    if ! should_validate "${app_name}" "${file_path}" "${direction}"; then
-        return 0
-    fi
-
-    # Get filename
-    file_name=$(basename "${file_path}")
-
-    # Validate based on file extension
-    if [[ "${file_name}" == *.jsonc ]]; then
-        # Validate as JSONC
-        if validate_jsonc "${file_path}"; then
-            return 0
-        else
-            echo "Validation failed for JSONC file: ${file_path}" >&2
-            return 1
-        fi
-    elif [[ "${file_name}" == *.json ]]; then
-        # Validate as JSON
-        if validate_json "${file_path}"; then
-            return 0
-        else
-            echo "Validation failed for JSON file: ${file_path}" >&2
-            return 1
-        fi
-    else
-        # Not a JSON file, skip validation
-        return 0
-    fi
 }
 
 # ============================================================================
@@ -1518,12 +1343,6 @@ sync_file() {
         fi
     fi
 
-    # Validate source file
-    if ! validate_file "${app_name}" "${source_file}" "${direction}"; then
-        log_error "Validation failed for source: ${source_file}"
-        return 1
-    fi
-
     # Handle dry run mode
     if is_dry_run; then
         dry_run_log "Would copy" "${source_file}" "${dest_file}"
@@ -1807,86 +1626,6 @@ sync_all() {
 }
 
 # ============================================================================
-# Validation Functions
-# ============================================================================
-
-# Validate all application configurations
-# Usage: validate_all_configs
-# Returns 0 if all valid, 1 if any invalid
-validate_all_configs() {
-    local apps
-    local total_apps=0
-    local total_files=0
-    local failed_apps=0
-
-    # Get list of all applications
-    apps=$(list_applications)
-
-    if [[ -z "${apps}" ]]; then
-        log_error "No applications found in config"
-        return 1
-    fi
-
-    log_info "Validating all application configurations..."
-
-    # Validate each app
-    while IFS= read -r app_name; do
-        [[ -z "${app_name}" ]] && continue
-
-        ((total_apps++))
-
-        local source_files
-        local app_valid=true
-
-        # Get source files for this app (push direction for validation)
-        source_files=$(get_source_files "${app_name}" "push")
-
-        if [[ -z "${source_files}" ]]; then
-            log_verbose "No files to validate for app: ${app_name}"
-            continue
-        fi
-
-        # Filter files
-        local filtered_files
-        filtered_files=$(echo "${source_files}" | filter_files "${app_name}" "push")
-
-        if [[ -z "${filtered_files}" ]]; then
-            log_verbose "No files to validate after filtering for app: ${app_name}"
-            continue
-        fi
-
-        # Validate each file
-        while IFS= read -r file_path; do
-            [[ -z "${file_path}" ]] && continue
-
-            ((total_files++))
-
-            # Check if file should be validated
-            if should_validate "${app_name}" "${file_path}" "push"; then
-                if ! validate_file "${app_name}" "${file_path}" "push"; then
-                    log_error "Validation failed for: ${file_path} (app: ${app_name})"
-                    app_valid=false
-                fi
-            fi
-        done <<< "${filtered_files}"
-
-        if [[ "${app_valid}" == "false" ]]; then
-            ((failed_apps++))
-        fi
-    done <<< "${apps}"
-
-    # Log summary
-    log_info "Validated ${total_apps} apps, ${total_files} files"
-
-    if [[ ${failed_apps} -gt 0 ]]; then
-        log_error "${failed_apps} app(s) failed validation"
-        return 1
-    fi
-
-    return 0
-}
-
-# ============================================================================
 # Main Entry Point
 # ============================================================================
 
@@ -1911,13 +1650,6 @@ main() {
         list)
             list_applications
             exit "${EXIT_SUCCESS}"
-            ;;
-        validate)
-            if validate_all_configs; then
-                exit "${EXIT_SUCCESS}"
-            else
-                exit "${EXIT_VALIDATION_FAILED}"
-            fi
             ;;
         push)
             if [[ "${APP}" == "--all" ]]; then

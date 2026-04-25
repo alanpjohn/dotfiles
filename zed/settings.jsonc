@@ -86,11 +86,11 @@
       "proxy": null,
       "proxy_no_verify": null,
     },
-    "enabled_in_text_threads": false,
   },
   "show_edit_predictions": false,
   "icon_theme": "Catppuccin Frappé",
   "agent": {
+    "dock": "left",
     "tool_permissions": {
       "default": "allow",
     },
@@ -119,17 +119,20 @@
       "language_servers": ["gopls", "golangci-lint"],
     },
   },
-  "vim_mode": true,
-  "ui_font_size": 16,
+  "vim_mode": false,
+  "ui_font_size": 18,
   "buffer_font_size": 14,
-  "buffer_font_family": "JetBrains Mono NL",
+  "buffer_font_family": "MesloLGS Nerd Font Mono",
   "terminal": {
-    "font_family": "JetBrains Mono NL",
+    "shell": {
+      "program": "fish",
+    },
+    "font_family": "MesloLGS Nerd Font Mono",
   },
   "theme": {
     "mode": "system",
-    "light": "One Light",
-    "dark": "Tokyo Night",
+    "light": "Matugen Blurred Light",
+    "dark": "Matugen Blurred Dark",
   },
   "file_types": {
     "Helm": [

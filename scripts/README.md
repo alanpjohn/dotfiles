@@ -2,7 +2,7 @@
 
 The Dotfiles Sync Script is a powerful bash utility designed to synchronize configuration files (dotfiles) between a git repository and the user's `~/.config` directory. It provides bidirectional sync support, allowing you to push configurations from your repository to your home directory or pull changes from your home directory back into the repository.
 
-This script is particularly useful for managing configuration files across multiple machines or for backing up your dotfiles to a git repository. It supports various configuration formats, handles file renaming between repository and config directories, and includes features like dry-run mode, backup creation, and JSON validation.
+This script is particularly useful for managing configuration files across multiple machines or for backing up your dotfiles to a git repository. It supports various configuration formats, handles file renaming between repository and config directories, and includes features like dry-run mode and backup creation.
 
 ## Features
 
@@ -17,8 +17,6 @@ The script includes a comprehensive set of features designed to make dotfile man
 - **Backup creation**: Before overwriting any existing file, the script automatically creates a backup with a configurable suffix (default: `.backup`). You can restore from these backups if needed.
 
 - **.gitignore support**: The script can respect your repository's `.gitignore` file and skip syncing files that are ignored by git. This prevents accidentally syncing sensitive or machine-specific files.
-
-- **JSON/JSONC validation**: Built-in validation for JSON and JSONC (JSON with Comments) files. The script can validate configuration files before syncing to catch syntax errors early.
 
 - **Include/exclude patterns**: Fine-grained control over which files are synchronized using glob patterns. You can specify which files to include and which to exclude for each application.
 
@@ -44,7 +42,7 @@ bash --version
 
 ### jq (JSON parser)
 
-jq is required for parsing the configuration file and validating JSON files. It is a lightweight command-line JSON processor.
+jq is required for parsing the configuration file. It is a lightweight command-line JSON processor.
 
 **Installation on Ubuntu/Debian:**
 
@@ -199,7 +197,6 @@ The configuration file consists of two main sections: `global` settings and `app
 {
   "global": {
     "backup_suffix": ".backup",
-    "default_validate_json": true,
     "respect_gitignore": true
   },
   "applications": [
@@ -212,8 +209,7 @@ The configuration file consists of two main sections: `global` settings and `app
       "file_mappings": [
         {
           "repo_name": "settings.jsonc",
-          "config_name": "settings.json",
-          "validate": false
+          "config_name": "settings.json"
         }
       ],
       "exclude": [
@@ -234,7 +230,6 @@ The `global` section contains settings that apply to all applications:
 | Setting | Type | Description | Default |
 |---------|------|-------------|---------|
 | `backup_suffix` | string | Suffix appended to backup files | `.backup` |
-| `default_validate_json` | boolean | Enable JSON validation by default | `true` |
 | `respect_gitignore` | boolean | Respect .gitignore when syncing | `true` |
 
 ### Application Entry Fields
@@ -270,7 +265,6 @@ Each application in the `applications` array requires the following fields:
 |---------------|------|-------------|
 | `repo_name` | string | The filename in the repository |
 | `config_name` | string | The corresponding filename in `~/.config` |
-| `validate` | boolean | Override validation setting for this specific file |
 
 **exclude**: An array of glob patterns for files that should be excluded from syncing. Patterns follow bash glob syntax (e.g., `*.json`, `*.backup`, `dir/`).
 
@@ -379,14 +373,6 @@ Lists all applications that are configured in `sync-config.json`.
 ./sync.sh list
 ```
 
-**validate** - Validate configurations
-
-Validates all JSON and JSONC configuration files without syncing. This is useful for checking configuration syntax before pushing or pulling.
-
-```bash
-./sync.sh validate
-```
-
 ### Options
 
 **--dry-run**
@@ -452,7 +438,6 @@ The script uses the following exit codes:
 | 2 | Invalid arguments |
 | 3 | Configuration error |
 | 4 | Sync failed |
-| 5 | Validation failed |
 
 ## Examples
 
@@ -585,16 +570,6 @@ If you need to rename a configuration file when syncing (e.g., `settings.jsonc` 
 
 Now when you push, `settings.jsonc` in the repository will be synced to `settings.json` in `~/.config`.
 
-### Example 7: Validating configurations before syncing
-
-Before pushing configurations, validate all JSON files to catch any syntax errors:
-
-```bash
-./sync.sh validate
-```
-
-If validation passes, you can proceed with the sync. If there are errors, they'll be reported with the file path and line number.
-
 ## Troubleshooting
 
 This section covers common issues you may encounter and their solutions:
@@ -653,47 +628,6 @@ You can verify the paths manually:
 ```bash
 ls ~/Documents/dotfiles/zed    # Check repo path
 ls ~/.config/zed               # Check config path
-```
-
-### JSON validation errors
-
-**Problem:** Validation fails for JSON or JSONC files.
-
-**Solution:** 
-
-1. Check the JSON syntax using jq directly:
-
-```bash
-jq empty ~/.config/zed/settings.json
-```
-
-2. For JSONC files (JSON with comments), ensure comments use valid syntax:
-
-```json
-{
-  // This is a valid comment
-  "setting": "value"
-}
-```
-
-3. If validation is too strict, you can disable it for specific files in your `file_mappings`:
-
-```json
-"file_mappings": [
-  {
-    "repo_name": "settings.jsonc",
-    "config_name": "settings.json",
-    "validate": false
-  }
-]
-```
-
-Or disable JSON validation globally in `sync-config.json`:
-
-```json
-"global": {
-  "default_validate_json": false
-}
 ```
 
 ### "Destination is newer, skipping" message
@@ -775,14 +709,13 @@ To add a new application to the sync configuration:
 If you want to add new features or modify existing behavior:
 
 1. **Understand the code structure**: The script is organized into logical sections:
-   - Helper Functions (lines 33-121): Logging, colors, error handling
-   - Dry-Run Mode Functions (lines 146-331): Preview functionality
-   - Validation Functions (lines 498-677): JSON validation
-   - Backup Functions (lines 682-822): Backup creation and restoration
-   - Configuration Parser (lines 828-945): Reading config file
-   - File Filtering Functions (lines 951-1159): Include/exclude logic
-   - Path Resolution Functions (lines 1164-1312): Path handling
-   - Sync Functions (lines 1318-1693): Core sync logic
+   - Helper Functions (lines 29-151): Logging, colors, error handling
+   - Dry-Run Mode Functions (lines 154-342): Preview functionality
+   - Backup Functions (lines 497-675): Backup creation and restoration
+   - Configuration Parser (lines 714-772): Reading config file
+   - File Filtering Functions (lines 837-1062): Include/exclude logic
+   - Path Resolution Functions (lines 1065-1231): Path handling
+   - Sync Functions (lines 1234-1626): Core sync logic
 
 2. **Follow existing patterns**: When adding new functionality, follow the existing code style and patterns used in the script.
 

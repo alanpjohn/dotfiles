@@ -2,7 +2,6 @@
     "global": {
         "backup_directory": ".backups",
         "backup_suffix": ".backup",
-        "default_validate_json": true,
         "respect_gitignore": true
     },
     "applications": [
@@ -14,8 +13,7 @@
             "file_mappings": [
                 {
                     "repo_name": "tmux.conf",
-                    "config_name": "tmux.conf",
-                    "validate": false
+                    "config_name": "tmux.conf"
                 }
             ],
             "exclude": [
@@ -31,13 +29,11 @@
             "file_mappings": [
                 {
                     "repo_name": "settings.jsonc",
-                    "config_name": "settings.json",
-                    "validate": false
+                    "config_name": "settings.json"
                 },
                 {
                     "repo_name": "tasks.jsonc",
-                    "config_name": "tasks.json",
-                    "validate": false
+                    "config_name": "tasks.json"
                 }
             ],
             "exclude": [
