@@ -20,15 +20,15 @@ palette = 'colors'
 
 [palettes.colors]
 mustard = '#af8700'
-color1 = '#d0bcff'
-color2 = '#381e72'
-color3 = '#cac4cf'
-color4 = '#211f24'
-color5 = '#381e72'
-color6 = '#141218'
-color7 = '#141218'
-color8 = '#d0bcff'
-color9 = '#ccc2dc'
+color1 = '{{colors.primary_fixed_dim.default.hex}}'
+color2 = '{{colors.on_primary.default.hex}}'
+color3 = '{{colors.on_surface_variant.default.hex}}'
+color4 = '{{colors.surface_container.default.hex}}'
+color5 = '{{colors.on_primary.default.hex}}'
+color6 = '{{colors.surface_dim.default.hex}}'
+color7 = '{{colors.surface.default.hex}}'
+color8 = '{{colors.primary.default.hex}}'
+color9 = '{{colors.tertiary.default.hex}}'
 
 [character]
 success_symbol = "[❯](color9 bold)"

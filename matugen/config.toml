@@ -1,0 +1,41 @@
+[config]
+
+[templates.ghostty]
+input_path = "~/.config/matugen/templates/ghostty"
+output_path = "~/.config/ghostty/themes/matugen"
+post_hook = "pkill -SIGUSR2 ghostty"
+
+[templates.zed]
+input_path = '~/.config/matugen/templates/zed-custom.json'
+output_path = '~/.config/zed/themes/matugen.json'
+
+[templates.neovim]
+input_path = "~/.config/matugen/templates/neovim/template.lua"
+output_path = "~/.config/nvim/matugen.lua"
+post_hook = "pkill -SIGUSR1 nvim"
+
+[templates.starship]
+input_path = '~/.config/matugen/templates/starship-colors.toml'
+output_path = '~/.config/starship.toml'
+
+[templates.vesktop]
+input_path = '~/.config/matugen/templates/midnight-discord.css'
+output_path = '~/.config/vesktop/themes/midnight-discord.css'
+
+[templates.tmux]
+input_path = '~/.config/matugen/templates/tmux-colors.conf'
+output_path = '~/.config/tmux/generated.conf'
+
+[templates.btop]
+input_path = '~/.config/matugen/templates/btop.theme'
+output_path = '~/.config/btop/themes/matugen.theme'
+post_hook = 'pkill -USR2 btop || true'
+
+[templates.opencode]
+input_path = '~/.config/matugen/templates/opencode-colors.json'
+output_path = '~/.config/opencode/themes/matugen.json'
+
+[templates.obsidian]
+input_path = '~/.config/matugen/templates/obsidian.css'
+output_path = '~/OneDrive/OneSyncFiles/Dev/.obsidian/themes/Minimal/theme.css'
+# The Output path is dependent on where the vault is

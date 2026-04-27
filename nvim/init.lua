@@ -173,6 +173,11 @@ require('lazy').setup {
                 vim.cmd.colorscheme('tokyonight')
             end
         },
+        {
+            'RRethy/base16-nvim',
+            lazy = false,
+            priority = 1000,
+        },
         {                       -- Useful plugin to show you pending keybinds.
             'folke/which-key.nvim',
             event = 'VimEnter', -- Sets the loading event to 'VimEnter'
@@ -634,7 +639,7 @@ require('lazy').setup {
             'nvim-lualine/lualine.nvim',
             dependencies = { 'nvim-tree/nvim-web-devicons' },
             config = function()
-                require('lualine').setup()
+                require('lualine').setup({ theme = 'base16' })
             end
         },
         { -- Autoformat
@@ -920,3 +925,36 @@ require('lazy').setup {
         enabled = true,
     },
 }
+
+-- [[ Matugen Dynamic Theming ]]
+-- Reload theme when matugen regenerates colors (signaled via SIGUSR1)
+local function reload_matugen_theme()
+    local matugen_path = os.getenv('HOME') .. '/.config/nvim/matugen.lua'
+    local f = io.open(matugen_path, 'r')
+    if f then
+        f:close()
+        dofile(matugen_path)
+    else
+        -- Fallback to default colorscheme if matugen hasn't run yet
+        pcall(vim.cmd, 'colorscheme tokyonight')
+    end
+
+    -- Re-source lualine after base16 overwrites its highlights
+    pcall(function()
+        require('lualine').setup({ theme = 'base16' })
+    end)
+end
+
+-- Listen for SIGUSR1 from matugen
+vim.api.nvim_create_autocmd('Signal', {
+    group = vim.api.nvim_create_augroup('MatugenReload', { clear = true }),
+    pattern = 'SIGUSR1',
+    callback = reload_matugen_theme,
+})
+
+-- Load matugen theme on startup (deferred to ensure plugins are ready)
+vim.api.nvim_create_autocmd('VimEnter', {
+    group = vim.api.nvim_create_augroup('MatugenInit', { clear = true }),
+    once = true,
+    callback = reload_matugen_theme,
+})

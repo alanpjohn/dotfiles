@@ -17,7 +17,8 @@
                 }
             ],
             "exclude": [
-                "plugins/"
+                "plugins/",
+                "generated.conf"
             ]
         },
         {
@@ -74,14 +75,9 @@
                 "tags",
                 ".luarc.json",
                 "spell/",
-                ".github/"
+                ".github/",
+                "matugen.lua"
             ]
-        },
-        {
-            "name": "starship",
-            "type": "file",
-            "repo_path": "starship/starship.toml",
-            "config_path": "starship.toml"
         },
         {
             "name": "opencode",
@@ -95,6 +91,27 @@
                 "bun.lock",
                 ".gitignore"
             ]
+        },
+        {
+            "name": "fish",
+            "type": "directory",
+            "repo_path": "fish",
+            "config_path": "fish",
+            "exclude": [
+                "functions/",
+                "completions/",
+                "conf.d/",
+                "themes/",
+                "fish_variables",
+                "fishd.*"
+            ]
+        },
+        {
+            "name": "matugen",
+            "type": "directory",
+            "repo_path": "matugen",
+            "config_path": "matugen",
+            "recursive": true
         }
     ]
 }
