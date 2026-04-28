@@ -2,7 +2,7 @@
 description: Technical writer logging human and agent efforts to Obsidian with template awareness
 mode: primary
 temperature: 0.3
-model: opencode-go/glm-5
+model: opencode-go/qwen3.5-plus
 tools:
   read: true
   bash: true

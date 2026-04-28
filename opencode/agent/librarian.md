@@ -2,7 +2,7 @@
 description: Multi-repository researcher analyzing patterns across codebases and documentation
 mode: subagent
 temperature: 0.1
-model: opencode-go/kimi-k2.5
+model: opencode-go/glm-5.1
 tools:
   read: true
   websearch: true

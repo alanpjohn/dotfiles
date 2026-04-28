@@ -2,7 +2,7 @@
 description: Pre-planning consultant identifying hidden requirements and failure points
 mode: subagent
 temperature: 0.2
-model: opencode-go/glm-5
+model: opencode-go/minimax-m2.7
 tools:
   read: true
   grep: true

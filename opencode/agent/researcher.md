@@ -2,7 +2,7 @@
 description: Codebase researcher analyzing internals and GitHub issues to explain behaviors
 mode: primary
 temperature: 0.2
-model: opencode-go/glm-5
+model: opencode-go/mimo-v2-pro
 tools:
   read: true
   task: true

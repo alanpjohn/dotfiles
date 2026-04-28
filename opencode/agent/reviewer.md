@@ -2,7 +2,7 @@
 description: Ruthless plan validator catching gaps, ambiguities, and missing context
 mode: subagent
 temperature: 0.1
-model: opencode-go/glm-5
+model: opencode-go/deepseek-v4-pro
 tools:
   read: true
 ---

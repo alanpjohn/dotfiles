@@ -2,7 +2,7 @@
 description: High-IQ technical consultant for hard debugging and architecture decisions
 mode: subagent
 temperature: 0.1
-model: opencode/gemini-3.1-pro
+model: opencode-go/deepseek-v4-pro
 tools:
   read: true
   grep: true

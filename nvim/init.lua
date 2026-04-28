@@ -639,7 +639,7 @@ require('lazy').setup {
             'nvim-lualine/lualine.nvim',
             dependencies = { 'nvim-tree/nvim-web-devicons' },
             config = function()
-                require('lualine').setup({ theme = 'base16' })
+                require('lualine').setup({ theme = 'auto' })
             end
         },
         { -- Autoformat
@@ -934,6 +934,8 @@ local function reload_matugen_theme()
     if f then
         f:close()
         dofile(matugen_path)
+        -- Tell lualine's "auto" theme to use the base16 lualine theme
+        vim.g.colors_name = 'base16'
     else
         -- Fallback to default colorscheme if matugen hasn't run yet
         pcall(vim.cmd, 'colorscheme tokyonight')
@@ -941,7 +943,7 @@ local function reload_matugen_theme()
 
     -- Re-source lualine after base16 overwrites its highlights
     pcall(function()
-        require('lualine').setup({ theme = 'base16' })
+        require('lualine').setup({ theme = 'auto' })
     end)
 end
 

@@ -2,7 +2,7 @@
 description: Single-task executor performing atomic implementation work
 mode: subagent
 temperature: 0.2
-model: opencode-go/minimax-m2.5
+model: opencode-go/deepseek-v4-flash
 tools:
   read: true
   write: true
