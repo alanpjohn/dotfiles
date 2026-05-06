@@ -48,7 +48,7 @@ type = "directory"
 repo_path = "nvim"
 config_path = "nvim"
 recursive = true
-exclude = ["lazy-lock.json", "tags", ".luarc.json", "spell/", ".github/", "matugen.lua"]
+exclude = ["lazy-lock.json", "tags", ".luarc.json", "spell/", ".github/", "matugen.lua","plugins/dankcolors.lua"]
 
 [[applications]]
 name = "opencode"
@@ -56,7 +56,7 @@ type = "directory"
 repo_path = "opencode"
 config_path = "opencode"
 recursive = true
-exclude = ["node_modules/", "package.json", "package-lock.json", "bun.lock", ".gitignore", "plans/", ".opencode", "themes"]
+exclude = ["node_modules/", "package.json", "package-lock.json", "bun.lock", ".gitignore", "plans/", ".opencode", "themes/"]
 
 [[applications]]
 name = "fish"

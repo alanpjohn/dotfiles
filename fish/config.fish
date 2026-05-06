@@ -9,5 +9,6 @@ starship init fish | source
 
 set -x EDITOR nvim
 
-# Dotfiles CLI repo location
-set -x DOTFILES_REPO_DIR ~/Documents/dotfiles
+if status is-interactive
+    atuin init fish | source
+end

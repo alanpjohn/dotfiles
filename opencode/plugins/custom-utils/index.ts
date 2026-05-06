@@ -1,17 +1,86 @@
 import { tool } from "@opencode-ai/plugin/tool";
 import type { PluginModule } from "@opencode-ai/plugin";
-import { mkdir, unlink } from "node:fs/promises";
+import { mkdir, unlink, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { createHash } from "node:crypto";
+import { basename } from "node:path";
 
-function getPlanPath(context: { worktree: string; sessionID: string }): string {
+function getOldPlanPath(context: { worktree: string; sessionID: string }): string {
   const worktreeHash = createHash("sha256")
     .update(context.worktree)
     .digest("hex")
     .slice(0, 8);
   const planDir = `${homedir()}/.config/opencode/plans`;
   return `${planDir}/${worktreeHash}-${context.sessionID}`;
+}
+
+// Alias for backward compatibility until tools are updated
+function getPlanPath(context: { worktree: string; sessionID: string }): string {
+  return getOldPlanPath(context);
+}
+
+function getDirectoryFromWorktree(worktree: string | undefined | null): string {
+  if (!worktree || worktree.trim() === "") {
+    return "unknown";
+  }
+  // Normalize path - remove trailing slashes
+  const normalized = worktree.replace(/\/+$/, "");
+  if (normalized === "/") {
+    return "root";
+  }
+  return basename(normalized);
+}
+
+function generateTimestamp(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}-${minutes}-${seconds}`;
+}
+
+function getNewPlanPath(context: { worktree: string; sessionID: string }): string {
+  const worktreeHash = createHash("sha256")
+    .update(context.worktree)
+    .digest("hex")
+    .slice(0, 8);
+  const directory = getDirectoryFromWorktree(context.worktree);
+  const timestamp = generateTimestamp();
+  const planDir = `${homedir()}/.config/opencode/plans/${worktreeHash}-${directory}`;
+  return `${planDir}/${timestamp}-${context.sessionID}.md`;
+}
+
+function getNewPlanDir(context: { worktree: string }): string {
+  const worktreeHash = createHash("sha256")
+    .update(context.worktree)
+    .digest("hex")
+    .slice(0, 8);
+  const directory = getDirectoryFromWorktree(context.worktree);
+  return `${homedir()}/.config/opencode/plans/${worktreeHash}-${directory}`;
+}
+
+async function findPlanBySessionID(context: { worktree: string; sessionID: string }): Promise<string | null> {
+  const planDir = getNewPlanDir(context);
+  
+  try {
+    if (!existsSync(planDir)) {
+      return null;
+    }
+    
+    const files = await readdir(planDir);
+    const matchingFile = files.find((file: string) => file.endsWith(`-${context.sessionID}.md`));
+    
+    if (matchingFile) {
+      return `${planDir}/${matchingFile}`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export const CustomUtilsPlugin: PluginModule = {
@@ -28,8 +97,8 @@ export const CustomUtilsPlugin: PluginModule = {
               .describe("Plan content in markdown format"),
           },
           async execute(args, context) {
-            const planDir = `${homedir()}/.config/opencode/plans`;
-            const planPath = getPlanPath(context);
+            const planPath = getNewPlanPath(context);
+            const planDir = getNewPlanDir(context);
 
             try {
               // Create directory if needed
@@ -50,15 +119,22 @@ export const CustomUtilsPlugin: PluginModule = {
             "[custom-utils] Read the current session's plan. Returns the plan content or an error if no plan exists.",
           args: {},
           async execute(_args, context) {
-            const planPath = getPlanPath(context);
-
             try {
-              if (!existsSync(planPath)) {
-                return "No plan found for this session. Use plan_create to create one.";
+              // Check old location first (backward compatibility)
+              const oldPlanPath = getOldPlanPath(context);
+              if (existsSync(oldPlanPath)) {
+                const content = await Bun.file(oldPlanPath).text();
+                return content;
               }
 
-              const content = await Bun.file(planPath).text();
-              return content;
+              // Check new location (search by sessionID)
+              const newPlanPath = await findPlanBySessionID(context);
+              if (newPlanPath) {
+                const content = await Bun.file(newPlanPath).text();
+                return content;
+              }
+
+              return "No plan found for this session. Use plan_create to create one.";
             } catch (error) {
               return `Error reading plan: ${error instanceof Error ? error.message : String(error)}`;
             }
@@ -77,10 +153,23 @@ export const CustomUtilsPlugin: PluginModule = {
               .describe("New content for the section"),
           },
           async execute(args, context) {
-            const planPath = getPlanPath(context);
-
             try {
-              if (!existsSync(planPath)) {
+              // Find plan using fallback logic (old location first, then new)
+              let planPath: string | null = null;
+              let isOldFormat = false;
+
+              // Check old location first
+              const oldPlanPath = getOldPlanPath(context);
+              if (existsSync(oldPlanPath)) {
+                planPath = oldPlanPath;
+                isOldFormat = true;
+              } else {
+                // Check new location
+                planPath = await findPlanBySessionID(context);
+                isOldFormat = false;
+              }
+
+              if (!planPath) {
                 return "No plan found for this session. Use plan_create to create one.";
               }
 
@@ -132,6 +221,24 @@ export const CustomUtilsPlugin: PluginModule = {
               const after = lines.slice(sectionEnd);
               const newContent = [...before, args.content, ...after].join("\n");
 
+              // If old format, migrate to new location
+              if (isOldFormat) {
+                const newPlanPath = getNewPlanPath(context);
+                const newPlanDir = getNewPlanDir(context);
+                
+                // Create directory if needed
+                await mkdir(newPlanDir, { recursive: true });
+                
+                // Write to new location
+                await Bun.write(newPlanPath, newContent);
+                
+                // Delete old file
+                await unlink(planPath);
+                
+                return `Section "${args.section}" updated successfully. Plan migrated to new format.`;
+              }
+
+              // Write to existing location
               await Bun.write(planPath, newContent);
 
               return `Section "${args.section}" updated successfully.`;
@@ -146,10 +253,20 @@ export const CustomUtilsPlugin: PluginModule = {
             "[custom-utils] Delete the current session's plan. Use this when you want to start over or clean up.",
           args: {},
           async execute(_args, context) {
-            const planPath = getPlanPath(context);
-
             try {
-              if (!existsSync(planPath)) {
+              // Find plan using fallback logic (old location first, then new)
+              let planPath: string | null = null;
+
+              // Check old location first
+              const oldPlanPath = getOldPlanPath(context);
+              if (existsSync(oldPlanPath)) {
+                planPath = oldPlanPath;
+              } else {
+                // Check new location
+                planPath = await findPlanBySessionID(context);
+              }
+
+              if (!planPath) {
                 return "No plan found for this session.";
               }
 

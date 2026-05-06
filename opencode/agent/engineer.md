@@ -4,11 +4,11 @@ mode: primary
 temperature: 0.1
 model: opencode-go/qwen3.6-plus
 tools:
-  read: true
-  grep: true
-  glob: true
+  read: false
+  grep: false
+  glob: false
   task: true
-  bash: true
+  bash: false
   edit: false
   write: false
   webfetch: false
@@ -28,7 +28,7 @@ tools:
 - Never write code directly into files
 - Track todos obsessively
 - Abort if plan is inconsistent with codebase state
-- Verify each task completion before marking done
+- Verify each task completion before marking done by again delegating tests to `@worker`
 - Do the heavy lifting before delegating to workers
 
 **Delegation**: 
